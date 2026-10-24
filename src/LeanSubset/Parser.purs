@@ -9,12 +9,12 @@ import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
+import Control.Lazy (fix)
 import LeanSubset.Lexer (Token, TokenKind(..))
 import LeanSubset.Syntax (Command(..), Expr(..), Operator(..), SourceSpan)
 
 type Parsed a = Either String (Tuple a (Array Token))
 type RecursiveParser = Array Token -> Parsed Expr
-
 parse :: Array Token -> Either String (Array Command)
 parse tokens = parseCommands tokens []
   where
@@ -45,10 +45,7 @@ parse tokens = parseCommands tokens []
     Nothing -> []
 
 parseExpression :: Array Token -> Parsed Expr
-parseExpression = fixParser parseAdd
-
-fixParser :: (RecursiveParser -> RecursiveParser) -> RecursiveParser
-fixParser parser = parser (fixParser parser)
+parseExpression = fix parseAdd
 
 parseAdd :: RecursiveParser -> RecursiveParser
 parseAdd recurse tokens = do
@@ -108,15 +105,15 @@ parseAtom recurse tokens = case Array.uncons tokens of
 
 parseMap :: Token -> Array Token -> Parsed Expr
 parseMap head tokens = do
-  Tuple function functionRest <- parseAtom (fixParser parseAdd) tokens
-  Tuple values remaining <- parseAtom (fixParser parseAdd) functionRest
+  Tuple function functionRest <- parseAtom (fix parseAdd) tokens
+  Tuple values remaining <- parseAtom (fix parseAdd) functionRest
   Right (Tuple (MapExpr function values { start: head.start, end: (spanOf values).end }) remaining)
 
 parseFoldl :: Token -> Array Token -> Parsed Expr
 parseFoldl head tokens = do
-  Tuple function functionRest <- parseAtom (fixParser parseAdd) tokens
-  Tuple initial initialRest <- parseAtom (fixParser parseAdd) functionRest
-  Tuple values remaining <- parseAtom (fixParser parseAdd) initialRest
+  Tuple function functionRest <- parseAtom (fix parseAdd) tokens
+  Tuple initial initialRest <- parseAtom (fix parseAdd) functionRest
+  Tuple values remaining <- parseAtom (fix parseAdd) initialRest
   Right (Tuple (FoldlExpr function initial values { start: head.start, end: (spanOf values).end }) remaining)
 
 parseLambda :: RecursiveParser -> Token -> Array Token -> Parsed Expr
