@@ -1,10 +1,10 @@
-# Proof Player
+# Lean Stepper
 
-A browser prototype for the Functional Programming Track's Proof Player idea. It steps through three short, Lean-inspired examples and updates a visualization at each step. The examples are teaching scripts; this prototype does not parse or execute Lean files.
+A browser teaching tool for a small, Lean-style functional language. It parses a constrained set of Lean-like expressions and advances one reduction at a time. List mapping lights the input being transformed; a left fold shows the current item and accumulator.
 
-## Run it
+This is a teaching subset, not a Lean implementation. It does not type-check Lean, run tactics, or accept arbitrary Lean files.
 
-Install the project dependencies and build the PureScript engine, then serve the folder over HTTP:
+## Run locally
 
 ```sh
 npm install
@@ -12,13 +12,23 @@ npm run build
 npm run serve
 ```
 
-Open `http://localhost:8001`. Without the build step, the page still opens as a visual preview, but the graph proof uses its JavaScript fallback instead of the PureScript engine.
+Open `http://localhost:8001`.
 
-## Project milestones
+## Supported syntax
 
-1. **Interactive shell and proof samples** — workspace layout, step controls, keyboard navigation, and graph/list/goal visualizations. (Complete.)
-2. **PureScript proof engine** — typed graph proof steps and pure state transitions are in `src/ProofPlayer.purs`; the graph sample uses them through the generated module. (Core connected and build verified.)
-3. **More PureScript proof models** — move the list and goal samples into typed state transitions, then add useful feedback for invalid steps.
-4. **Polish and accessibility** — verify responsive behavior, keyboard and screen-reader flows, and refine examples and explanatory copy.
+- Natural number literals and lists, such as `[1, 2, 3]`
+- `let name := value; body`
+- `fun x => body` and top-level `def name := expression`
+- Function application and `+`, `-`, `*`
+- `#eval expression`
+- `List.map function values` and `List.foldl function initial values`
 
-The initial supported examples are intentionally constrained. The project should describe itself as Lean-inspired until it can read and validate actual Lean input.
+The examples live in `app.js`. The lexer, parser, syntax tree, evaluator, and UI adapter are in `src/LeanSubset/`. Evaluation uses a left-to-right, call-by-value small-step strategy.
+
+## Project stages
+
+1. Lean-subset lexer with source spans.
+2. Parser and syntax tree.
+3. Small-step evaluation for lets, functions, arithmetic, `List.map`, and `List.foldl`.
+4. Browser visualization and step controls.
+5. Documentation and cleanup.
