@@ -28,14 +28,14 @@
           <nav class="file-list" id="sampleList" aria-label="Lean examples"></nav>
           <div class="sidebar-bottom">
             <div class="sidebar-tip"><span class="tip-icon">✳</span><div><strong>One reduction per step.</strong><p>Watch the expression change and follow each list item.</p></div></div>
-            <div class="sidebar-footer"><span class="status-dot"></span>Lean syntax subset <span class="version">v0.2</span></div>
+            <div class="sidebar-footer"><span class="status-dot"></span>Lean stepper <span class="version">v0.3</span></div>
           </div>
         </aside>
 
         <main class="main-content">
           <div class="page-heading">
             <div><div class="eyebrow"><span class="eyebrow-dot"></span>SMALL-STEP EVALUATOR</div><h1 id="proofTitle">Map each value</h1><p id="proofDescription">Watch the function transform one list item at a time.</p></div>
-            <span class="subset-badge">TEACHING SUBSET</span>
+            <span class="subset-badge" id="modeBadge">TEACHING SUBSET</span>
           </div>
 
           <section class="progress-section" aria-label="Evaluation progress">
@@ -45,7 +45,7 @@
 
           <div class="work-grid">
             <section class="code-panel panel">
-              <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">λ</span><span id="fileName">map_values.lean</span><span class="file-pill">LEAN</span></div><span class="file-pill" id="parserStatus">PARSING</span></div>
+              <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">λ</span><span id="fileName">map_values.lean</span><span class="file-pill">LEAN</span></div><span class="file-pill" id="parserStatus">STEP SUBSET</span></div>
               <div class="code-body" id="codeBody" aria-label="Interpreter source code"></div>
               <div class="code-status"><span class="status-check">✓</span><span id="codeStatus">Proof ready to run</span><span class="code-status-right">Lean-inspired subset</span></div>
             </section>
@@ -56,6 +56,12 @@
               <div class="visual-caption"><span id="visualCaption">The starting state</span><span class="step-dots" id="stepDots"></span></div>
             </section>
           </div>
+
+          <section class="editor-card panel" aria-label="Custom Lean program">
+            <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">✎</span><label for="sourceEditor">Your Lean program</label></div><span class="editor-hint">Edit the example or paste Lean code</span></div>
+            <textarea id="sourceEditor" spellcheck="false" aria-label="Lean source editor"></textarea>
+            <div class="editor-footer"><span id="runtimeMessage" role="status" aria-live="polite">Subset ready · custom Lean falls back to Lean 4</span><button class="next-button run-button" id="runButton"><span>Run program</span><span class="next-arrow">→</span></button></div>
+          </section>
 
           <section class="goal-card panel"><div class="goal-icon">λ</div><div class="goal-copy"><span class="goal-label">CURRENT EXPRESSION</span><p id="goalText">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</p></div><span class="goal-state" id="goalState">Ready</span></section>
 

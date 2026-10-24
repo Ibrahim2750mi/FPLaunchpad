@@ -12,4 +12,12 @@ const result = spawnSync(
   { env, stdio: "inherit", shell: process.platform === "win32" },
 );
 
-process.exitCode = result.status ?? 1;
+if (result.status !== 0) process.exit(result.status ?? 1);
+
+const leanRuntime = spawnSync(
+  resolve("node_modules/esbuild/bin/esbuild"),
+  ["node_modules/lean4.js/src/lean4.js", "--bundle", "--format=esm", "--platform=browser", "--outfile=dist/lean-runtime.js"],
+  { env, stdio: "inherit" },
+);
+
+process.exitCode = leanRuntime.status ?? 1;

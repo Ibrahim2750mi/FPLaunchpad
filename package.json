@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "serve": "python3 -m http.server 8001 --bind 127.0.0.1"
+    "serve": "python3 scripts/serve.py"
   },
   "devDependencies": {
     "esbuild": "0.27.2",
     "purescript": "0.15.16",
     "spago": "1.0.5"
+  },
+  "dependencies": {
+    "lean4.js": "0.0.2"
   }
 }
