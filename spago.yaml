@@ -9,3 +9,4 @@ package:
     - either
     - maybe
     - prelude
+    - strings
