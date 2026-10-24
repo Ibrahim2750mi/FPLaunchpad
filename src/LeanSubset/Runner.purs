@@ -48,8 +48,7 @@ startForUi source = case Lexer.lex source of
       Left message -> errorResponse source message
       Right (Tuple definitions expression) ->
         let machine = { source, definitions, expression, stepCount: 0, done: false }
-            location = expressionSpan expression
-        in response machine "" expression location (-1) [] [] "" "Ready to reduce." false 0
+        in response machine "" expression { start: -1, end: -1 } (-1) [] [] "" "Ready to reduce." false 0
 
 stepForUi :: MachineState -> UiResponse
 stepForUi machine

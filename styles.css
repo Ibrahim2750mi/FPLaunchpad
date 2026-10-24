@@ -5,3 +5,25 @@
 @media(max-width:620px){.topbar{height:55px;padding:0 16px;gap:17px}.project-label{font-size:10px}.top-actions{gap:10px}.keyboard-hint{display:none}.workspace{display:block}.sidebar{min-height:auto;border-right:0;border-bottom:1px solid #252722;padding:12px 15px}.sidebar-heading,.workspace-name,.sidebar-bottom{display:none}.file-list{display:flex;overflow:auto;margin:0;gap:6px}.sample-item{flex:none;height:32px;padding:0 9px;border:1px solid transparent}.sample-item.active{border-color:#454c37}.sample-item.active:before{display:none}.main-content{padding:26px 15px}.page-heading{margin-bottom:22px}.page-heading h1{font-size:25px}.share-button{padding:7px 9px}.work-grid{gap:10px}.code-panel,.visual-panel{height:310px}.code-body,.visual-stage{height:233px}.goal-card{align-items:flex-start}.goal-copy p{font-size:10px;line-height:1.5}.goal-state{font-size:8px;padding:4px 6px}.control-hint{display:none}.player-controls{justify-content:flex-end}.panel-toolbar{padding:0 11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 .visual-solved{position:absolute;bottom:15px;padding:5px 8px;border:1px solid #495638;border-radius:3px;background:#242a1c;color:#c7ef72;font:8px var(--mono);letter-spacing:1px}
+.subset-badge{padding:6px 8px;border:1px solid #4b543a;border-radius:4px;background:#22271b;color:#bddc80;font:8px var(--mono);letter-spacing:.8px;white-space:nowrap}
+.code-redex{color:#1d2413;background:var(--lime);border-radius:2px;box-shadow:0 0 12px #c7ef7240}
+.parser-badge-error{color:#e99983;border-color:#74473d;background:#2a1e1a}
+.eval-visual{display:grid;gap:22px;justify-items:center;max-width:92%;text-align:center}
+.eval-operation{font:9px var(--mono);letter-spacing:1px;color:#8c9184;text-transform:uppercase}
+.eval-list-row{display:flex;align-items:flex-start;justify-content:center;gap:8px;flex-wrap:wrap}
+.eval-cell{min-width:42px;display:grid;justify-items:center;gap:7px}
+.eval-box{width:42px;height:42px;display:grid;place-items:center;border:1px solid #444a3d;border-radius:6px;background:#20231d;color:#daddd3;font:15px var(--mono);transition:.25s}
+.eval-box.active{border-color:var(--lime);background:#303920;color:var(--lime);box-shadow:0 0 20px #c7ef7230;transform:translateY(-4px)}
+.eval-box.done{border-color:#738d49;color:#d2ec9f}
+.eval-box.accumulator{border-color:#8aa954;background:#29301f;color:#d5eea9}
+.eval-output{min-height:13px;color:#9dbd68;font:9px var(--mono)}
+.eval-arrow{align-self:center;margin-top:-20px;color:#68705d;font:12px var(--mono)}
+.eval-acc-row{display:flex;align-items:center;gap:10px;color:#7c8176;font:9px var(--mono)}
+.eval-acc-label{color:#8d9286;letter-spacing:.6px}
+.eval-acc-arrow{color:#707668;font-size:14px}
+.eval-scalar{padding:10px 16px;border:1px solid #596c3d;border-radius:6px;background:#252b1d;color:var(--lime);font:20px var(--mono);box-shadow:0 0 24px #c7ef7218}
+.eval-empty{color:#767b70;font:10px var(--mono)}
+.goal-state.error{color:#f0a18c;border-color:#74473d;background:#2a1e1a}
+.previous-button{height:34px;border:1px solid #373a33;border-radius:5px;background:#1b1d19;color:#b5b8ae;padding:0 13px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:8px}
+.previous-button span{font-size:14px}
+.previous-button:disabled{opacity:.45;cursor:default}

@@ -3,7 +3,7 @@ workspace:
     registry: 80.8.0
 
 package:
-  name: proof-player
+  name: lean-stepper
   dependencies:
     - arrays
     - either

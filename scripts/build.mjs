@@ -8,7 +8,7 @@ const env = {
 
 const result = spawnSync(
   "spago",
-  ["bundle", "--bundle-type", "module", "--platform", "browser", "--module", "ProofPlayer", "--outfile", "dist/proof-core.js"],
+  ["bundle", "--bundle-type", "module", "--platform", "browser", "--module", "LeanSubset.Runner", "--outfile", "dist/lean-stepper.js"],
   { env, stdio: "inherit", shell: process.platform === "win32" },
 );
 

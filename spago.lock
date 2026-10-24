@@ -1,7 +1,7 @@
 {
   "workspace": {
     "packages": {
-      "proof-player": {
+      "lean-stepper": {
         "path": "./",
         "core": {
           "dependencies": [

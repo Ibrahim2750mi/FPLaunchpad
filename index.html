@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#10120f" />
-    <title>Proof Player — Syntax 2026</title>
+    <title>Lean Interpreter — Syntax 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,53 +13,53 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Proof Player home">
+        <a class="brand" href="#" aria-label="Lean Stepper home">
           <span class="brand-mark"><span></span><span></span><span></span><span></span></span>
-          <span>proof<span class="brand-light">player</span></span>
+          <span>lean<span class="brand-light">stepper</span></span>
         </a>
-        <div class="project-label"><span class="crumb-muted">Syntax 2026</span><span class="crumb-slash">/</span><span>Proof Player</span></div>
+        <div class="project-label"><span class="crumb-muted">Syntax 2026</span><span class="crumb-slash">/</span><span>Lean Interpreter</span></div>
         <div class="top-actions"><span class="keyboard-hint"><kbd>?</kbd> shortcuts</span><span class="avatar" title="Local workspace">FP</span></div>
       </header>
 
       <div class="workspace">
         <aside class="sidebar">
-          <div class="sidebar-heading"><span>WORKSPACE</span><button class="icon-button" id="addSample" aria-label="Add a sample">＋</button></div>
-          <div class="workspace-name"><span class="folder-icon">▾</span><span>proof-player</span><span class="tiny-count">3</span></div>
-          <nav class="file-list" id="sampleList" aria-label="Sample proofs"></nav>
+          <div class="sidebar-heading"><span>INTERPRETER</span><span class="tiny-count">LEAN SUBSET</span></div>
+          <div class="workspace-name"><span class="folder-icon">▾</span><span>examples</span><span class="tiny-count">4</span></div>
+          <nav class="file-list" id="sampleList" aria-label="Lean examples"></nav>
           <div class="sidebar-bottom">
-            <div class="sidebar-tip"><span class="tip-icon">✳</span><div><strong>A proof, one step at a time.</strong><p>Follow the code as the picture takes shape.</p></div></div>
-            <div class="sidebar-footer"><span class="status-dot"></span>All changes saved <span class="version">v0.1</span></div>
+            <div class="sidebar-tip"><span class="tip-icon">✳</span><div><strong>One reduction per step.</strong><p>Watch the expression change and follow each list item.</p></div></div>
+            <div class="sidebar-footer"><span class="status-dot"></span>Lean syntax subset <span class="version">v0.2</span></div>
           </div>
         </aside>
 
         <main class="main-content">
           <div class="page-heading">
-            <div><div class="eyebrow"><span class="eyebrow-dot"></span>PROOF WORKSPACE</div><h1 id="proofTitle">Reach the destination</h1><p id="proofDescription">A graph grows one connection at a time.</p></div>
-            <button class="share-button" id="copyLink"><span>↗</span> Share</button>
+            <div><div class="eyebrow"><span class="eyebrow-dot"></span>SMALL-STEP EVALUATOR</div><h1 id="proofTitle">Map each value</h1><p id="proofDescription">Watch the function transform one list item at a time.</p></div>
+            <span class="subset-badge">TEACHING SUBSET</span>
           </div>
 
-          <section class="progress-section" aria-label="Proof progress">
-            <div class="progress-meta"><span><strong id="stepCounter">Step 0</strong><span class="meta-muted"> of <span id="stepTotal">4</span></span></span><span class="progress-percent" id="progressPercent">Ready to begin</span></div>
+          <section class="progress-section" aria-label="Evaluation progress">
+            <div class="progress-meta"><span><strong id="stepCounter">Reduction 0</strong></span><span class="progress-percent" id="progressPercent">Ready to begin</span></div>
             <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
           </section>
 
           <div class="work-grid">
             <section class="code-panel panel">
-              <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">λ</span><span id="fileName">reach_destination.lean</span><span class="file-pill">LEAN</span></div><button class="more-button" aria-label="More options">···</button></div>
-              <div class="code-body" id="codeBody" aria-label="Proof source code"></div>
+              <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">λ</span><span id="fileName">map_values.lean</span><span class="file-pill">LEAN</span></div><span class="file-pill" id="parserStatus">PARSING</span></div>
+              <div class="code-body" id="codeBody" aria-label="Interpreter source code"></div>
               <div class="code-status"><span class="status-check">✓</span><span id="codeStatus">Proof ready to run</span><span class="code-status-right">Lean-inspired subset</span></div>
             </section>
 
             <section class="visual-panel panel">
-              <div class="panel-toolbar"><div class="panel-title"><span class="visual-glyph">◈</span><span>Visualisation</span></div><span class="live-badge"><i></i> LIVE</span></div>
+              <div class="panel-toolbar"><div class="panel-title"><span class="visual-glyph">◈</span><span>Evaluation state</span></div><span class="live-badge"><i></i> LIVE</span></div>
               <div class="visual-stage" id="visualStage"></div>
               <div class="visual-caption"><span id="visualCaption">The starting state</span><span class="step-dots" id="stepDots"></span></div>
             </section>
           </div>
 
-          <section class="goal-card panel"><div class="goal-icon">◎</div><div class="goal-copy"><span class="goal-label">CURRENT GOAL</span><p id="goalText">Prove that a path connects <b>A</b> to <b>D</b>.</p></div><span class="goal-state" id="goalState">Not started</span></section>
+          <section class="goal-card panel"><div class="goal-icon">λ</div><div class="goal-copy"><span class="goal-label">CURRENT EXPRESSION</span><p id="goalText">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</p></div><span class="goal-state" id="goalState">Ready</span></section>
 
-          <div class="player-controls"><div class="control-hint"><span class="hint-icon">⌘</span><span><kbd>←</kbd> <kbd>→</kbd> to step through</span></div><div class="control-buttons"><button class="reset-button" id="resetButton"><span>↺</span> Reset</button><button class="next-button" id="nextButton"><span id="nextLabel">Begin proof</span><span class="next-arrow">→</span></button></div></div>
+          <div class="player-controls"><div class="control-hint"><span class="hint-icon">⌘</span><span><kbd>←</kbd> <kbd>→</kbd> to step through</span></div><div class="control-buttons"><button class="previous-button" id="previousButton" disabled><span>←</span> Previous</button><button class="reset-button" id="resetButton"><span>↺</span> Reset</button><button class="next-button" id="nextButton"><span id="nextLabel">Reduce once</span><span class="next-arrow">→</span></button></div></div>
         </main>
       </div>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>

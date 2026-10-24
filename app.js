@@ -1,199 +1,200 @@
-const proofs = [
+const examples = [
   {
-    id: "graph", file: "reach_destination.lean", title: "Reach the destination",
-    description: "A graph grows one connection at a time.", kind: "graph",
-    goal: "Prove that a path connects <b>A</b> to <b>D</b>.",
-    start: "The starting state",
-    lines: [
-      { code: "theorem reach_destination : Path A D := by", caption: "We begin with the path goal." },
-      { code: "  have h₁ : Edge A B := edge_ab", op: "edge", edge: ["A", "B"], caption: "First, establish the connection from A to B." },
-      { code: "  have h₂ : Edge B C := edge_bc", op: "edge", edge: ["B", "C"], caption: "Then connect B to C." },
-      { code: "  have h₃ : Edge C D := edge_cd", op: "edge", edge: ["C", "D"], caption: "One more edge reaches the final stretch." },
-      { code: "  exact Path.trans (Path.trans h₁ h₂) h₃", op: "solve", caption: "Compose the edges. A path from A to D is complete." },
-    ],
+    id: "map",
+    file: "map_values.lean",
+    title: "Map each value",
+    description: "Watch a function transform each list item in turn.",
+    kind: "map",
+    preview: ["1", "2", "3"],
+    source: "#eval let xs := [1, 2, 3]; let double := fun x => x * 2; List.map double xs",
   },
   {
-    id: "list", file: "sort_a_list.lean", title: "Put the list in order",
-    description: "Watch each swap move an element into place.", kind: "list",
-    goal: "Show that <b>[3, 1, 2]</b> is sorted by repeated swaps.", start: "The original list",
-    lines: [
-      { code: "theorem sort_example : Sorts [3, 1, 2] [1, 2, 3] := by", caption: "Our goal is to transform the list into sorted order." },
-      { code: "  apply Swap.first", op: "swap", at: 0, caption: "Swap the first out-of-order pair." },
-      { code: "  apply Swap.second", op: "swap", at: 1, caption: "Move 3 past 2." },
-      { code: "  exact Swap.refl", op: "solve", caption: "The list is sorted. The goal is solved." },
-    ],
+    id: "fold",
+    file: "fold_a_list.lean",
+    title: "Fold a list",
+    description: "Follow the accumulator as it combines each item.",
+    kind: "fold",
+    preview: ["1", "2", "3"],
+    source: "#eval List.foldl (fun acc x => acc + x) 0 [1, 2, 3]",
   },
   {
-    id: "goal", file: "simplify_goal.lean", title: "Shrink the goal",
-    description: "Follow a statement simplify into its conclusion.", kind: "goal",
-    goal: "Prove that <b>n + 0 = n</b> for every natural number n.", start: "The original goal",
-    lines: [
-      { code: "theorem add_zero (n : Nat) : n + 0 = n := by", caption: "We need to show that adding zero leaves n unchanged." },
-      { code: "  induction n with", op: "goal", text: "Base case: 0 + 0 = 0", caption: "Induction splits the goal into a base case and a successor case." },
-      { code: "  | zero => rfl", op: "goal", text: "Successor case: k + 1 + 0 = k + 1", caption: "The base case is immediate; now consider the successor." },
-      { code: "  | succ k ih => simpa [Nat.add_succ, ih]", op: "solve", caption: "Use the induction hypothesis. Both cases are done." },
-    ],
+    id: "let",
+    file: "let_and_numbers.lean",
+    title: "Reduce a let expression",
+    description: "Substitute names, then reduce the arithmetic.",
+    kind: "scalar",
+    preview: [],
+    source: "#eval let x := 4; let y := x + 1; y * 2",
+  },
+  {
+    id: "function",
+    file: "define_a_function.lean",
+    title: "Call a function",
+    description: "Unfold a definition and reduce its function body.",
+    kind: "scalar",
+    preview: [],
+    source: "def square := fun x => x * x\n#eval square 4",
   },
 ];
 
 const $ = (id) => document.getElementById(id);
-let proof = proofs[0];
-let step = 0;
-let toastTimer;
-let proofCore = null;
-let proofCoreError = null;
+let example = examples[0];
+let engine = null;
+let response = null;
+let history = [];
+let engineError = "";
 
-// The page remains a static preview before dependencies are installed.
-// After `npm run build`, graph playback is driven by the PureScript module.
-import("./dist/proof-core.js").then((core) => {
-  proofCore = core;
-  render();
+import("./dist/lean-stepper.js").then((module) => {
+  engine = module;
+  startExample();
 }).catch(() => {
-  proofCoreError = "PureScript bundle is missing; run npm install, then npm run build.";
+  engineError = "Build the PureScript interpreter to enable evaluation.";
   render();
 });
 
+function selectExample(id) {
+  const next = examples.find((item) => item.id === id);
+  if (!next || next.id === example.id) return;
+  example = next;
+  startExample();
+}
+
+function startExample() {
+  history = [];
+  response = engine ? engine.startForUi(example.source) : null;
+  render();
+}
+
+function advance() {
+  if (!engine || !response || response.done || response.error) return;
+  history.push(response);
+  const previous = response;
+  response = engine.stepForUi(response.machine);
+  if (response.done && !response.error) {
+    response = {
+      ...response,
+      activeIndex: -1,
+      inputItems: previous.inputItems,
+      outputItems: previous.outputItems,
+      accumulatorText: previous.accumulatorText,
+    };
+  }
+  render();
+}
+
+function rewind() {
+  if (!history.length) return;
+  response = history.pop();
+  render();
+}
+
+function reset() { startExample(); }
+
 function renderSamples() {
-  $("sampleList").innerHTML = proofs.map((p) => `
-    <div class="sample-item ${p.id === proof.id ? "active" : ""}" role="button" tabindex="0" data-id="${p.id}">
-      <span class="sample-icon">${p.kind === "graph" ? "⌘" : p.kind === "list" ? "☷" : "◇"}</span>${p.file}
+  $("sampleList").innerHTML = examples.map((item) => `
+    <div class="sample-item ${item.id === example.id ? "active" : ""}" role="button" tabindex="0" data-id="${item.id}">
+      <span class="sample-icon">${item.kind === "map" ? "↗" : item.kind === "fold" ? "Σ" : item.kind === "let" ? "λ" : "ƒ"}</span>${item.file}
     </div>`).join("");
   $("sampleList").querySelectorAll(".sample-item").forEach((item) => {
-    const select = () => selectProof(item.dataset.id);
-    item.addEventListener("click", select);
-    item.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
+    item.addEventListener("click", () => selectExample(item.dataset.id));
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectExample(item.dataset.id);
+      }
+    });
   });
 }
 
 function renderCode() {
-  const rows = [{ code: "-- A tiny proof, made visible", comment: true }, ...proof.lines];
-  $("codeBody").innerHTML = rows.map((line, i) => {
-    const proofIndex = i - 1;
-    const cls = proofIndex === step ? "current" : proofIndex >= 0 && proofIndex < step ? "completed" : "";
-    return `<div class="code-line ${cls}" data-line="${i}"><span class="line-number">${String(i + 1).padStart(2, "0")}</span><span class="line-content">${highlight(line.code, line.comment)}</span></div>`;
+  const source = example.source;
+  const focusStart = response?.focusStart ?? -1;
+  const focusEnd = response?.focusEnd ?? -1;
+  let offset = 0;
+  $("codeBody").innerHTML = source.split("\n").map((line, lineIndex) => {
+    const lineStart = offset;
+    const lineEnd = lineStart + line.length;
+    offset = lineEnd + 1;
+    const selectedStart = Math.max(0, focusStart - lineStart);
+    const selectedEnd = Math.min(line.length, focusEnd - lineStart);
+    let visibleLine;
+    if (focusStart >= 0 && selectedEnd > selectedStart) {
+      visibleLine = `${escapeHtml(line.slice(0, selectedStart))}<span class="code-redex">${escapeHtml(line.slice(selectedStart, selectedEnd))}</span>${escapeHtml(line.slice(selectedEnd))}`;
+    } else {
+      visibleLine = escapeHtml(line);
+    }
+    const activeLine = focusStart >= lineStart && focusStart <= lineEnd;
+    return `<div class="code-line ${activeLine ? "current" : ""}" data-line="${lineIndex}"><span class="line-number">${String(lineIndex + 1).padStart(2, "0")}</span><span class="line-content">${visibleLine}</span></div>`;
   }).join("");
-  const active = $("codeBody").querySelector(".current");
-  if (active) active.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-function highlight(code, comment = false) {
-  if (comment) return `<span class="comment">${escapeHtml(code)}</span>`;
-  const escaped = escapeHtml(code);
-  return escaped.replace(/\b(theorem|have|by|apply|exact|with|induction|simpa)\b/g, '<span class="kw">$1</span>')
-    .replace(/\b(Path|Edge|Sorts|Nat)\b/g, '<span class="type">$1</span>')
-    .replace(/\b(edge_ab|edge_bc|edge_cd|Path\.trans|Swap\.first|Swap\.second|Swap\.refl|rfl)\b/g, '<span class="fn">$1</span>');
+function renderMapVisual() {
+  const items = response?.inputItems?.length ? response.inputItems : example.preview;
+  const outputs = response?.outputItems || [];
+  const active = response?.activeIndex ?? -1;
+  if (!items.length) return `<div class="eval-empty">Waiting for a list value…</div>`;
+  return `<div class="eval-visual"><div class="eval-operation">List.map · input → result</div><div class="eval-list-row">${items.map((value, index) => {
+    const output = outputs[index] || "";
+    const classes = ["eval-box", index === active ? "active" : "", output ? "done" : ""].filter(Boolean).join(" ");
+    return `<div class="eval-cell"><div class="${classes}">${escapeHtml(value)}</div><span class="eval-output">${output ? `↓ ${escapeHtml(output)}` : "·"}</span></div>${index < items.length - 1 ? "<span class='eval-arrow'>→</span>" : ""}`;
+  }).join("")}</div></div>`;
 }
 
-function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-}
-
-function renderGraph() {
-  const nodes = { A: [12, 48], B: [37, 24], C: [63, 72], D: [88, 43] };
-  const activeEdges = graphEdgesForCurrentStep();
-  const visited = new Set(activeEdges.flat());
-  const solved = proofCore ? Boolean(currentGraphState()?.solved) : step >= proof.lines.length;
-  const edgeMarkup = [["A", "B"], ["B", "C"], ["C", "D"]].map(([a,b]) => {
-    const active = activeEdges.some(([x,y]) => x === a && y === b);
-    return `<line class="${active ? "active-edge" : ""}" x1="${nodes[a][0]}%" y1="${nodes[a][1]}%" x2="${nodes[b][0]}%" y2="${nodes[b][1]}%"/>`;
-  }).join("");
-  const nodeMarkup = Object.entries(nodes).map(([name, [x,y]]) => {
-    const isCurrent = (step <= 1 && name === "A") || (step === 2 && name === "B") || (step === 3 && name === "C") || (step >= 4 && name === "D");
-    return `<div class="graph-node ${visited.has(name) ? "visited" : ""} ${name === "D" ? "destination" : ""} ${isCurrent ? "current-node" : ""}" style="left:${x}%;top:${y}%">${name}<span class="node-label">${name === "D" ? "destination" : `node ${name}`}</span></div>`;
-  }).join("");
-  return `<div class="graph-view"><svg class="graph-edges" viewBox="0 0 100 100" preserveAspectRatio="none">${edgeMarkup}</svg>${nodeMarkup}</div>${solved ? "<div class='visual-solved'>PATH FOUND</div>" : ""}`;
-}
-
-function currentGraphState() {
-  if (!proofCore) return null;
-  const actionCount = Math.max(0, Math.min(step - 1, proofCore.reachDestination.length));
-  let cursor = { index: 0, state: proofCore.initialState };
-  for (let i = 0; i < actionCount; i += 1) {
-    const result = proofCore.runNextForUi(proofCore.reachDestination)(cursor);
-    if (result.error) break;
-    cursor = { index: result.index, state: result.state };
-  }
-  return cursor.state;
-}
-
-function graphEdgesForCurrentStep() {
-  const state = currentGraphState();
-  if (state) return state.edges.map(({ from, to }) => [from, to]);
-  return proof.lines.slice(1, step + 1).filter((line) => line.edge).map((line) => line.edge);
-}
-
-function renderList() {
-  let values = [3, 1, 2];
-  const swaps = proof.lines.slice(1, step + 1).filter((line) => line.op === "swap");
-  swaps.forEach(({ at }) => { [values[at], values[at + 1]] = [values[at + 1], values[at]]; });
-  const solved = step >= proof.lines.length;
-  return `<div class="list-view">${values.map((value, i) => `<div class="list-box ${swaps.length && i <= swaps.length ? "sorted" : ""} ${step === 1 && i < 2 || step === 2 && i > 0 ? "focus" : ""}">${value}<span class="list-label">index ${i}</span></div>${i < values.length - 1 ? "<span class='list-arrow'>→</span>" : ""}`).join("")}</div>${solved ? "<div class='visual-solved'>SORTED ✓</div>" : ""}`;
-}
-
-function renderGoal() {
-  const messages = ["n + 0 = n", "Base case: 0 + 0 = 0", "Successor case: k + 1 + 0 = k + 1"];
-  const solved = step >= proof.lines.length;
-  const index = Math.min(Math.max(step - 1, 0), messages.length - 1);
-  return `<div class="goal-visual"><div class="goal-equation"><span class="dim">⊢ </span><span class="${step ? "highlight" : ""}">${escapeHtml(messages[index])}</span></div>${step > 0 ? `<div class="goal-arrow"></div><div class="goal-result">${solved ? "✓ All cases proved" : escapeHtml(messages[index])}</div>` : ""}</div>`;
+function renderFoldVisual() {
+  const items = response?.inputItems?.length ? response.inputItems : example.preview;
+  const active = response?.activeIndex ?? -1;
+  const accumulator = response?.accumulatorText || "0";
+  if (!items.length) return `<div class="eval-empty">Waiting for a list value…</div>`;
+  const current = active >= 0 ? items[active] : "";
+  return `<div class="eval-visual"><div class="eval-operation">List.foldl · accumulator + current item</div><div class="eval-acc-row"><span class="eval-acc-label">ACCUMULATOR</span><span class="eval-box accumulator">${escapeHtml(accumulator)}</span>${current ? `<span class="eval-acc-arrow">+</span><span class="eval-box active">${escapeHtml(current)}</span>` : response?.done ? `<span class="eval-acc-arrow">=</span><span class="eval-box accumulator">${escapeHtml(response.expressionText)}</span>` : ""}</div><div class="eval-list-row">${items.map((value, index) => `<div class="eval-cell"><div class="eval-box ${index === active ? "active" : index < active || response?.done ? "done" : ""}">${escapeHtml(value)}</div><span class="eval-output">item ${index + 1}</span></div>${index < items.length - 1 ? "<span class='eval-arrow'>→</span>" : ""}`).join("")}</div></div>`;
 }
 
 function renderVisual() {
-  const solved = step >= proof.lines.length;
-  $("visualStage").innerHTML = proof.kind === "graph" ? renderGraph() : proof.kind === "list" ? renderList() : renderGoal();
-  const currentLine = proof.lines[step - 1];
-  $("visualCaption").textContent = solved ? "Proof complete" : currentLine?.caption || proof.start;
-  $("goalText").innerHTML = proof.goal;
-  $("goalState").textContent = solved ? "Proved ✓" : step ? "In progress" : "Not started";
-  $("goalState").classList.toggle("solved", solved);
-  $("codeStatus").textContent = solved
-    ? "All goals accomplished"
-    : proof.id === "graph" && !proofCore
-      ? (proofCoreError || "Loading PureScript proof engine…")
-      : proof.id === "graph"
-        ? (step ? "PureScript engine · proof running" : "PureScript engine · ready")
-        : (step ? "Proof running · 1 goal remaining" : "Proof ready to run");
-  $("stepDots").innerHTML = proof.lines.map((_, i) => `<i class="step-dot ${i < step ? "done" : ""}"></i>`).join("");
+  if (example.kind === "map") $("visualStage").innerHTML = renderMapVisual();
+  else if (example.kind === "fold") $("visualStage").innerHTML = renderFoldVisual();
+  else {
+    const value = response?.expressionText || "?";
+    $("visualStage").innerHTML = `<div class="eval-visual"><div class="eval-operation">Current value</div><div class="eval-scalar">${escapeHtml(value)}</div></div>`;
+  }
+  $("visualCaption").textContent = response?.note || (engineError || "One reduction at a time");
+  $("stepDots").innerHTML = Array.from({ length: 5 }, (_, index) => `<i class="step-dot ${index < (response?.stepCount || 0) % 6 ? "done" : ""}"></i>`).join("");
 }
 
 function render() {
-  $("proofTitle").textContent = proof.title;
-  $("proofDescription").textContent = proof.description;
-  $("fileName").textContent = proof.file;
-  $("stepCounter").textContent = `Step ${step}`;
-  $("stepTotal").textContent = proof.lines.length;
-  const solved = step >= proof.lines.length;
-  const percent = Math.round((step / proof.lines.length) * 100);
-  $("progressFill").style.width = `${percent}%`;
-  $("progressPercent").textContent = solved ? "Proof complete ✳" : step ? `${percent}% complete` : "Ready to begin";
-  $("nextLabel").textContent = solved ? "Completed" : step ? "Next step" : "Begin proof";
-  $("nextButton").disabled = solved;
-  renderSamples(); renderCode(); renderVisual();
+  renderSamples();
+  $("proofTitle").textContent = example.title;
+  $("proofDescription").textContent = example.description;
+  $("fileName").textContent = example.file;
+  $("stepCounter").textContent = `Reduction ${response?.stepCount || 0}`;
+  $("progressFill").style.width = response?.done ? "100%" : `${Math.min(88, 6 + (response?.stepCount || 0) * 7)}%`;
+  $("progressPercent").textContent = response?.done ? "Normal form reached" : response?.stepCount ? "Stepping through expression" : "Ready to reduce";
+  $("nextLabel").textContent = response?.done ? "Complete" : response?.stepCount ? "Next reduction" : "Reduce once";
+  $("nextButton").disabled = !engine || !response || response.done || Boolean(response.error);
+  $("previousButton").disabled = history.length === 0;
+  $("resetButton").disabled = !engine;
+  $("codeStatus").textContent = response?.error ? response.error : engine ? (response?.done ? "Evaluation complete" : "Lean subset interpreter · ready") : engineError || "Loading interpreter…";
+  $("parserStatus").textContent = response?.error ? "ERROR" : engine ? "READY" : "LOADING";
+  $("parserStatus").classList.toggle("parser-badge-error", Boolean(response?.error));
+  $("goalText").textContent = response?.expressionText || example.source;
+  $("goalState").textContent = response?.error ? "Error" : response?.done ? "Complete" : response?.stepCount ? "Reducing" : "Ready";
+  $("goalState").classList.toggle("error", Boolean(response?.error));
+  $("goalState").classList.toggle("solved", Boolean(response?.done && !response?.error));
+  renderCode();
+  renderVisual();
 }
 
-function selectProof(id) {
-  const selected = proofs.find((p) => p.id === id);
-  if (!selected || selected.id === proof.id) return;
-  proof = selected; step = 0; render();
-}
-function advance() { if (step < proof.lines.length) { step += 1; render(); } }
-function rewind() { if (step > 0) { step -= 1; render(); } }
-function reset() { step = 0; render(); }
-function showToast(message) {
-  const toast = $("toast"); toast.textContent = message; toast.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 }
 
 $("nextButton").addEventListener("click", advance);
+$("previousButton").addEventListener("click", rewind);
 $("resetButton").addEventListener("click", reset);
-$("copyLink").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(location.href); showToast("Proof player link copied"); }
-  catch { showToast("Copy the page address to share this proof player"); }
-});
-$("addSample").addEventListener("click", () => showToast("More proof samples are coming soon"));
 document.addEventListener("keydown", (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey || ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
   if (event.key === "ArrowRight") { event.preventDefault(); advance(); }
   if (event.key === "ArrowLeft") { event.preventDefault(); rewind(); }
   if (event.key.toLowerCase() === "r") reset();
 });
+
 render();
