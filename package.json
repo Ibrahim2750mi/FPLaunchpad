@@ -1,0 +1,15 @@
+{
+  "name": "proof-player",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "python3 -m http.server 8001 --bind 127.0.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.2",
+    "purescript": "0.15.16",
+    "spago": "1.0.5"
+  }
+}

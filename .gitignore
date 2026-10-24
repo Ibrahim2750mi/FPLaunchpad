@@ -1,5 +1,9 @@
 dist
 dist-*
+node_modules
+.spago
+output
+.cache
 cabal-dev
 *.o
 *.hi
