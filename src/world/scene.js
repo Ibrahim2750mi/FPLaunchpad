@@ -369,7 +369,10 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       // the next generated isle. Keep the player's current viewing angle while
       // the island itself moves through the frame, as it does in the home arena.
       const position = adventurePosition(state.adventureStep);
-      const focus = [position[0], position[1] + 1.2, position[2]];
+      // The generated isles include tall trees and landmarks. Aim above the
+      // ground plane so the complete island, rather than its base, sits in the
+      // center of the view during each reduction flight.
+      const focus = [position[0], position[1] + 3.8, position[2]];
       const rigOffset = sub3(camera.eye, camera.target);
       const next = { eye: v3(focus, rigOffset), target: focus };
       cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
