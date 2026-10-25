@@ -1022,8 +1022,8 @@ body.adventure-running .visual-stage .eval-visual,body.adventure-running .visual
 body.adventure-running .goal-card.panel{position:fixed;left:var(--lesson-left)!important;right:auto!important;top:auto!important;bottom:93px!important;width:var(--lesson-width)!important;max-height:clamp(58px,14vh,112px);overflow:hidden;}
 body.adventure-running .evaluation-trace{max-height:clamp(42px,10vh,78px);}
 body.adventure-running .player-controls{left:var(--lesson-left)!important;right:auto!important;bottom:15px!important;width:var(--lesson-width)!important;}
-/* Keep the source preview beside the adventure heading instead of beneath it. */
-body.adventure-running .code-panel{left:auto!important;right:0!important;top:24px!important;width:min(330px,38vw)!important;height:190px!important;}
+/* Keep the source preview beside and below the adventure heading. */
+body.adventure-running .code-panel{left:auto!important;right:0!important;top:clamp(118px,17vh,160px)!important;width:min(330px,38vw)!important;height:190px!important;}
 
 /* A duskier parchment gives the code diary clearer separation from the sky. */
 .code-drawer{background-color:#d9c9a8!important;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(52,68,91,.2) 32px),linear-gradient(90deg,rgba(137,72,57,.18),transparent 42px),linear-gradient(145deg,#e0d1b2,#cfbd98)!important;color:#211e2b!important;}
