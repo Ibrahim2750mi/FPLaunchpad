@@ -2,6 +2,8 @@
 
 A browser teaching tool that steps through a Lean-style subset and runs other code with Lean 4. In subset mode, each reduction advances one step; list mapping lights the input being transformed, and a left fold shows the current item and accumulator.
 
+The interface uses four procedural, vertex-coloured 3D islands and an animated guide light. The WebGL scene follows the current reduction through lesson-specific paths; values and outputs appear at their world anchors while the camera flies toward the active island. The generated models are CC0 and can be rebuilt with `npm run build:assets`. The supplied illustrated sky and optional ambient track remain as the scene backdrop and music.
+
 Programs in the stepper subset are reduced one step at a time. When code falls outside that subset, the app runs it with Lean 4 compiled to WebAssembly and tags the result as **ACTUAL LEAN 4**. For that fallback, the viewer generates a syntax-based overview and explains the constructs it recognized; that overview is not a Lean evaluation trace.
 
 ## Run locally

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:assets": "node scripts/generate-world-assets.mjs",
     "serve": "python3 scripts/serve.py"
   },
   "devDependencies": {

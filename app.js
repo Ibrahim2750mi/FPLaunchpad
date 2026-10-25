@@ -1,25 +1,37 @@
+import { createWorldExperience } from "./src/world/scene.js";
+
 const examples = [
   {
-    id: "map", file: "map_values.lean", title: "Map each value",
+    id: "map", place: "Verdant Isle", file: "map_values.lean", title: "Map each value",
     description: "Watch a function transform each list item in turn.", kind: "map", preview: ["1", "2", "3"],
     source: "#eval let xs := [1, 2, 3]; let double := fun x => x * 2; List.map double xs",
   },
   {
-    id: "fold", file: "fold_a_list.lean", title: "Fold a list",
+    id: "fold", place: "Ember Isle", file: "fold_a_list.lean", title: "Fold a list",
     description: "Follow the accumulator as it combines each item.", kind: "fold", preview: ["1", "2", "3"],
     source: "#eval List.foldl (fun acc x => acc + x) 0 [1, 2, 3]",
   },
   {
-    id: "let", file: "let_and_numbers.lean", title: "Reduce a let expression",
+    id: "let", place: "Frost Isle", file: "let_and_numbers.lean", title: "Reduce a let expression",
     description: "Substitute names, then reduce the arithmetic.", kind: "scalar", preview: [],
     source: "#eval let x := 4; let y := x + 1; y * 2",
   },
   {
-    id: "function", file: "define_a_function.lean", title: "Call a function",
+    id: "function", place: "Cloud Library", file: "define_a_function.lean", title: "Call a function",
     description: "Unfold a definition and reduce its function body.", kind: "scalar", preview: [],
     source: "def square := fun x => x * x\n#eval square 4",
   },
 ];
+
+// These are the in-world positions used by both the camera and the reduction path.
+// Keeping them together makes the light trail stay attached to its island as we fly in.
+const sceneAnchors = {
+  map: { x: 0.5, y: 0.55 },
+  fold: { x: 0.81, y: 0.53 },
+  let: { x: 0.12, y: 0.65 },
+  function: { x: 0.84, y: 0.19 },
+  custom: { x: 0.5, y: 0.5 },
+};
 
 const $ = (id) => document.getElementById(id);
 let example = examples[0];
@@ -32,6 +44,11 @@ let executionMode = "subset";
 let customProgram = false;
 let runGeneration = 0;
 let leanRuntimePromise = null;
+let stepSoundsEnabled = true;
+let dayTheme = false;
+let motionEnabled = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sceneCamera = { x: 0, y: 0, zoom: 1.02, targetX: 0, targetY: 0, targetZoom: 1.02 };
+let worldExperience = null;
 
 import("./dist/lean-stepper.js").then((module) => {
   engine = module;
@@ -45,6 +62,7 @@ function selectExample(id) {
   const next = examples.find((item) => item.id === id);
   if (!next) return;
   example = next;
+  playStepTone(392, 0.08);
   customProgram = false;
   startExample();
 }
@@ -64,6 +82,7 @@ function advance() {
   history.push(response);
   const previous = response;
   response = engine.stepForUi(response.machine);
+  playStepTone(523, 0.12);
   if (response.done && !response.error) {
     response = {
       ...response,
@@ -238,18 +257,16 @@ function cleanLeanResult(result) {
 
 function renderSamples() {
   $("sampleList").innerHTML = examples.map((item) => `
-    <div class="sample-item ${item.id === example.id ? "active" : ""}" role="button" tabindex="0" data-id="${item.id}">
-      <span class="sample-icon">${item.kind === "map" ? "↗" : item.kind === "fold" ? "Σ" : item.kind === "let" ? "λ" : "ƒ"}</span>${item.file}
-    </div>`).join("");
+    <button class="sample-item ${item.id === example.id ? "active" : ""}" type="button" aria-pressed="${item.id === example.id}" data-id="${item.id}">
+      <span class="sample-icon">${item.kind === "map" ? "✧" : item.kind === "fold" ? "◉" : item.kind === "let" ? "❄" : "☁"}</span>
+      <span class="sample-copy"><strong>${item.place}</strong><small>${item.title}</small></span>
+      <span class="isle-arrow">${item.id === example.id ? "✦" : "↗"}</span>
+    </button>`).join("");
   $("sampleList").querySelectorAll(".sample-item").forEach((item) => {
     item.addEventListener("click", () => selectExample(item.dataset.id));
-    item.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        selectExample(item.dataset.id);
-      }
-    });
   });
+  const index = examples.findIndex((item) => item.id === example.id);
+  $("journeyCount").textContent = `${String(index + 1).padStart(2, "0")} / ${String(examples.length).padStart(2, "0")}`;
 }
 
 function renderCode() {
@@ -349,6 +366,33 @@ function renderVisual() {
   $("stepDots").innerHTML = Array.from({ length: 5 }, (_, index) => `<i class="step-dot ${index < (response?.stepCount || 0) % 6 ? "done" : ""}"></i>`).join("");
 }
 
+function moveSceneToState() {
+  const cameraElement = $("worldCamera");
+  if (!cameraElement) return;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const anchor = sceneAnchors[example.id] || sceneAnchors.custom;
+  const itemCount = Math.max(1, response?.inputItems?.length || example.preview?.length || 3);
+  const steps = response?.stepCount || 0;
+  const activeIndex = response?.activeIndex >= 0 ? response.activeIndex : (steps ? steps - 1 : (itemCount - 1) / 2);
+  const current = Math.max(0, Math.min(itemCount - 1, activeIndex));
+  const across = current - (itemCount - 1) / 2;
+  const gap = Math.min(76, width * 0.085);
+  const focusX = width * anchor.x + across * gap;
+  const focusY = height * anchor.y + Math.sin(current * 1.25) * Math.min(18, height * 0.025);
+  // Each reduction moves the camera to the active value. The same point is drawn
+  // by the canvas path, so the light and island remain in one coherent world.
+  sceneCamera.targetZoom = response?.done ? 1.12 : Math.min(1.48, 1.08 + steps * 0.075);
+  sceneCamera.targetX = (width / 2 - focusX) * sceneCamera.targetZoom;
+  sceneCamera.targetY = (height / 2 - focusY) * sceneCamera.targetZoom;
+  if (!motionEnabled) {
+    sceneCamera.x = sceneCamera.targetX;
+    sceneCamera.y = sceneCamera.targetY;
+    sceneCamera.zoom = sceneCamera.targetZoom;
+    cameraElement.style.transform = `translate3d(${sceneCamera.x}px, ${sceneCamera.y}px, 0) scale(${sceneCamera.zoom})`;
+  }
+}
+
 function runtimeTag() {
   if (executionMode === "lean") return "LEAN 4 · ACTUAL";
   if (executionMode === "lean-loading") return "LEAN 4 · LOADING";
@@ -359,6 +403,11 @@ function runtimeTag() {
 
 function render() {
   renderSamples();
+  $("worldScene").querySelectorAll("[data-island]").forEach((island) => {
+    island.classList.toggle("is-active-island", island.dataset.island === example.id);
+  });
+  $("islandName").textContent = examples.find((item) => item.id === example.id)?.place.toUpperCase() || "OPEN SKY";
+  moveSceneToState();
   $("proofTitle").textContent = example.title;
   $("proofDescription").textContent = example.description;
   $("fileName").textContent = example.file;
@@ -384,9 +433,10 @@ function render() {
     : executionMode === "lean-loading" ? "Loading actual Lean 4 runtime…"
     : engine ? (response?.done ? "Evaluation complete" : "Lean subset interpreter · ready")
     : engineError || "Loading interpreter…";
-  $("goalText").textContent = response?.mode === "lean"
+  const expression = response?.mode === "lean"
     ? (response.error ? "Lean 4 reported an error" : response.stdout || "Lean 4 accepted this program")
     : response?.expressionText || activeSource;
+  $("goalText").innerHTML = highlightExpression(expression);
   $("goalState").textContent = response?.error ? "Error" : executionMode === "lean" ? "Lean 4" : response?.done ? "Complete" : response?.stepCount ? "Reducing" : "Ready";
   $("goalState").classList.toggle("error", Boolean(response?.error));
   $("goalState").classList.toggle("solved", Boolean(response?.done && !response?.error));
@@ -396,11 +446,313 @@ function render() {
   else if (executionMode !== "lean-loading") $("runtimeMessage").textContent = engineError || "Edit the code, then run it.";
   renderCode();
   renderVisual();
+  worldExperience?.setState({
+    lessonId: examples.some((item) => item.id === example.id) ? example.id : "custom",
+    stepCount: response?.stepCount || 0,
+    activeIndex: response?.activeIndex ?? -1,
+    inputItems: response?.inputItems || example.preview || [],
+    outputItems: response?.outputItems || [],
+    accumulatorText: response?.accumulatorText || "",
+    expressionText: response?.expressionText || activeSource,
+    done: Boolean(response?.done),
+    error: Boolean(response?.error),
+    mode: executionMode,
+  });
 }
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 }
+
+function highlightExpression(text) {
+  const token = /#[\w.]+|[A-Za-z_][\w']*(?:\.[A-Za-z_][\w']*)*|-?\d+|=>|:=|\*|\+|=|[()[\],;]/g;
+  let html = "", offset = 0, match;
+  while ((match = token.exec(String(text)))) {
+    html += escapeHtml(String(text).slice(offset, match.index));
+    const value = match[0];
+    const kind = /^#/.test(value) ? "directive"
+      : /^(?:fun|let|in|if|then|else|match|with|by|do)$/.test(value) ? "keyword"
+        : /^-?\d+$/.test(value) ? "number"
+          : /^(?:List|Nat|Int|Bool|String|Array)(?:\.|$)/.test(value) ? "namespace"
+            : /^[A-Za-z_]/.test(value) ? "identifier" : "operator";
+    html += `<span class="expr-${kind}">${escapeHtml(value)}</span>`;
+    offset = token.lastIndex;
+  }
+  return html + escapeHtml(String(text).slice(offset));
+}
+
+let toneContext;
+function playStepTone(frequency = 523, duration = 0.12) {
+  if (!stepSoundsEnabled) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  toneContext ||= new AudioContextClass();
+  if (toneContext.state === "suspended") toneContext.resume();
+  const now = toneContext.currentTime;
+  const noteDuration = Math.max(duration, 0.24);
+  for (const [partial, volume] of [[1, 0.024], [2, 0.004]]) {
+    const oscillator = toneContext.createOscillator();
+    const gain = toneContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency * partial, now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequency * partial * 1.018, now + noteDuration * 0.7);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.045);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + noteDuration);
+    oscillator.connect(gain).connect(toneContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + noteDuration + 0.03);
+  }
+}
+
+function setToggleState(button, enabled, onLabel, offLabel, onAria, offAria) {
+  button.setAttribute("aria-pressed", String(enabled));
+  button.setAttribute("aria-label", enabled ? offAria : onAria);
+  button.querySelector(".toggle-label").textContent = enabled ? onLabel : offLabel;
+  button.classList.toggle("is-active", enabled);
+}
+
+const ambientMusic = $("ambientMusic");
+let musicFadeId = 0;
+function fadeAmbientMusic(targetVolume, pauseWhenQuiet = false) {
+  cancelAnimationFrame(musicFadeId);
+  const startVolume = ambientMusic.volume;
+  const startedAt = performance.now();
+  const duration = 750;
+  const fade = (now) => {
+    const amount = Math.min(1, (now - startedAt) / duration);
+    const eased = amount * amount * (3 - 2 * amount);
+    ambientMusic.volume = startVolume + (targetVolume - startVolume) * eased;
+    if (amount < 1) musicFadeId = requestAnimationFrame(fade);
+    else if (pauseWhenQuiet) ambientMusic.pause();
+  };
+  musicFadeId = requestAnimationFrame(fade);
+}
+$("musicToggle").addEventListener("click", async () => {
+  const enabled = $("musicToggle").getAttribute("aria-pressed") !== "true";
+  if (enabled) {
+    ambientMusic.volume = 0;
+    try {
+      await ambientMusic.play();
+      fadeAmbientMusic(0.3);
+      setToggleState($("musicToggle"), true, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
+    } catch {
+      setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
+      $("musicToggle").querySelector(".toggle-label").textContent = "Music unavailable";
+    }
+  } else {
+    fadeAmbientMusic(0, true);
+    setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
+  }
+});
+
+$("soundToggle").addEventListener("click", () => {
+  stepSoundsEnabled = !stepSoundsEnabled;
+  setToggleState($("soundToggle"), stepSoundsEnabled, "Sound on", "Sound off", "Turn step sounds on", "Turn step sounds off");
+});
+
+$("themeToggle").addEventListener("click", () => {
+  dayTheme = !dayTheme;
+  document.body.dataset.theme = dayTheme ? "day" : "dusk";
+  $("worldScene").querySelectorAll('img[src*="_dusk"], img[src*="_day"]').forEach((image) => {
+    image.src = image.src.replace(/_(dusk|day)\.webp$/, `_${dayTheme ? "day" : "dusk"}.webp`);
+  });
+  setToggleState($("themeToggle"), dayTheme, "Daylight", "Starlight", "Switch to daylight", "Switch to starlight");
+  worldExperience?.setTheme(dayTheme);
+});
+
+function applyMotionState() {
+  document.body.dataset.motion = motionEnabled ? "on" : "off";
+  setToggleState($("motionToggle"), motionEnabled, "Motion on", "Motion off", "Turn ambient motion on", "Turn ambient motion off");
+  moveSceneToState();
+  worldExperience?.setMotion(motionEnabled);
+}
+
+$("motionToggle").addEventListener("click", () => {
+  motionEnabled = !motionEnabled;
+  applyMotionState();
+});
+applyMotionState();
+
+function startWorldMotion() {
+  const canvas = $("worldParticles");
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  const atlas = new Image();
+  atlas.src = "assets/floating-world/webp/particles/particle_atlas.webp";
+  const layers = [...document.querySelectorAll(".world-layer")];
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  let guidePosition = 0;
+  let particles = [];
+  const resize = () => {
+    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(window.innerWidth * ratio);
+    canvas.height = Math.round(window.innerHeight * ratio);
+    canvas.dataset.ratio = String(ratio);
+    particles = Array.from({ length: 56 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: (8 + Math.random() * 21) * ratio,
+      frame: [3, 4, 5, 6, 7][Math.floor(Math.random() * 5)],
+      speed: (0.08 + Math.random() * 0.2) * ratio,
+      alpha: 0.22 + Math.random() * 0.45,
+      phase: Math.random() * Math.PI * 2,
+    }));
+  };
+  resize();
+  window.addEventListener("resize", () => { resize(); moveSceneToState(); }, { passive: true });
+  window.addEventListener("pointermove", (event) => {
+    targetX = (event.clientX / window.innerWidth - 0.5) * 2;
+    targetY = (event.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
+  atlas.onload = () => {
+    const frame = (time) => {
+      if (document.getElementById("worldScene")?.classList.contains("world-3d-ready")) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      const ratio = Number(canvas.dataset.ratio || 1);
+      const cameraElement = $("worldCamera");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      currentX += (targetX - currentX) * 0.035;
+      currentY += (targetY - currentY) * 0.035;
+      if (motionEnabled) {
+        sceneCamera.x += (sceneCamera.targetX - sceneCamera.x) * 0.045;
+        sceneCamera.y += (sceneCamera.targetY - sceneCamera.y) * 0.045;
+        sceneCamera.zoom += (sceneCamera.targetZoom - sceneCamera.zoom) * 0.035;
+      } else {
+        sceneCamera.x = sceneCamera.targetX;
+        sceneCamera.y = sceneCamera.targetY;
+        sceneCamera.zoom = sceneCamera.targetZoom;
+      }
+      cameraElement.style.transform = `translate3d(${sceneCamera.x}px, ${sceneCamera.y}px, 0) scale(${sceneCamera.zoom})`;
+      if (motionEnabled) {
+        layers.forEach((layer) => {
+          const depth = Number(layer.dataset.depth || 0);
+          layer.style.transform = `translate3d(${-currentX * depth * 580}px, ${-currentY * depth * 580}px, 0)`;
+        });
+      } else {
+        layers.forEach((layer) => { layer.style.transform = "translate3d(0, 0, 0)"; });
+      }
+      for (const particle of particles) {
+        if (motionEnabled) {
+          particle.y -= particle.speed * 2.2;
+          particle.x += Math.sin(time / 1600 + particle.phase) * 0.28 * ratio;
+          if (particle.y < -particle.size) particle.y = canvas.height + particle.size;
+        }
+        context.globalAlpha = particle.alpha * (motionEnabled ? 0.65 + 0.35 * Math.sin(time / 760 + particle.phase) : 0.6);
+        context.drawImage(atlas, particle.frame * 128, 0, 128, 128,
+          particle.x - particle.size / 2, particle.y - particle.size / 2, particle.size, particle.size);
+      }
+
+      const values = executionMode.startsWith("lean")
+        ? []
+        : response?.inputItems?.length ? response.inputItems : example.preview;
+      if (values?.length) {
+        const width = canvas.width / ratio;
+        const height = canvas.height / ratio;
+        const anchor = sceneAnchors[example.id] || sceneAnchors.custom;
+        const { x: anchorX, y: anchorY } = anchor;
+        const gap = Math.min(76, width * 0.085);
+        const points = values.map((value, index) => ({
+          x: width * anchorX + (index - (values.length - 1) / 2) * gap,
+          y: height * anchorY + Math.sin(index * 1.25) * Math.min(18, height * 0.025),
+          value: String(value),
+        }));
+        const requestedTarget = response?.activeIndex >= 0
+          ? response.activeIndex
+          : Math.max(0, (response?.stepCount || 0) - 1);
+        const activeTarget = Math.min(points.length - 1, requestedTarget);
+        guidePosition += ((response?.error ? 0 : activeTarget) - guidePosition) * (motionEnabled ? 0.055 : 1);
+
+        context.save();
+        context.lineWidth = 2 * ratio;
+        context.setLineDash([5 * ratio, 8 * ratio]);
+        context.strokeStyle = "rgba(255, 232, 174, .42)";
+        context.shadowColor = "rgba(255, 224, 151, .8)";
+        context.shadowBlur = 12 * ratio;
+        context.beginPath();
+        points.forEach((point, index) => index ? context.lineTo(point.x * ratio, point.y * ratio) : context.moveTo(point.x * ratio, point.y * ratio));
+        context.stroke();
+        context.setLineDash([]);
+        points.forEach((point, index) => {
+          const px = point.x * ratio;
+          const py = point.y * ratio;
+          const done = index < (response?.outputItems?.length || 0);
+          context.beginPath();
+          context.arc(px, py, 5 * ratio, 0, Math.PI * 2);
+          context.fillStyle = done ? "rgba(255, 239, 193, .9)" : "rgba(211, 216, 245, .44)";
+          context.fill();
+          context.font = `500 ${11 * ratio}px 'DM Mono', monospace`;
+          context.textAlign = "center";
+          context.fillStyle = "rgba(255, 250, 235, .94)";
+          context.shadowBlur = 7 * ratio;
+          context.fillText(point.value, px, py - 14 * ratio);
+          const output = response?.outputItems?.[index];
+          if (output !== undefined && output !== "") {
+            context.fillStyle = "rgba(255, 232, 174, .9)";
+            context.fillText(String(output), px, py + 21 * ratio);
+          }
+        });
+        const lower = Math.floor(guidePosition);
+        const upper = Math.min(points.length - 1, lower + 1);
+        const blend = guidePosition - lower;
+        const guideX = (points[lower].x + (points[upper].x - points[lower].x) * blend) * ratio;
+        const guideY = (points[lower].y + (points[upper].y - points[lower].y) * blend) * ratio;
+        const glow = context.createRadialGradient(guideX, guideY, 2 * ratio, guideX, guideY, 35 * ratio);
+        glow.addColorStop(0, "rgba(255, 255, 235, .98)");
+        glow.addColorStop(0.18, "rgba(255, 226, 154, .82)");
+        glow.addColorStop(1, "rgba(255, 201, 116, 0)");
+        context.globalAlpha = 0.85 + 0.15 * Math.sin(time / 430);
+        context.fillStyle = glow;
+        context.beginPath();
+        context.arc(guideX, guideY, 35 * ratio, 0, Math.PI * 2);
+        context.fill();
+        context.globalAlpha = 1;
+        context.restore();
+      } else if (response) {
+        const width = canvas.width / ratio;
+        const height = canvas.height / ratio;
+        const anchor = sceneAnchors[example.id] || sceneAnchors.custom;
+        const textX = width * anchor.x;
+        const textY = height * anchor.y;
+        const title = response?.error ? "The path needs another look" : executionMode.startsWith("lean")
+          ? (response.stdout || response.output || "Lean accepted the program")
+          : (response.expressionText || activeSource);
+        const text = String(title).replace(/\s+/g, " ").trim();
+        const roomToEdge = Math.max(130, 2 * Math.min(textX, width - textX) - 32);
+        const maxWidth = Math.min(width * 0.5, roomToEdge, 520);
+        context.save();
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.font = `500 ${15 * ratio}px 'DM Mono', monospace`;
+        context.shadowColor = "rgba(255, 224, 151, .72)";
+        context.shadowBlur = 17 * ratio;
+        context.fillStyle = response?.error ? "rgba(255, 205, 192, .95)" : "rgba(255, 250, 235, .96)";
+        let line = "";
+        let lineIndex = 0;
+        for (const word of text.split(" ")) {
+          const candidate = line ? `${line} ${word}` : word;
+          if (context.measureText(candidate).width > maxWidth * ratio && line) {
+            context.fillText(line, textX * ratio, (textY + lineIndex * 23) * ratio);
+            line = word;
+            lineIndex += 1;
+          } else line = candidate;
+        }
+        if (line) context.fillText(line, textX * ratio, (textY + lineIndex * 23) * ratio);
+        context.restore();
+      }
+      context.globalAlpha = 1;
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  };
+}
+
+startWorldMotion();
 
 $("sourceEditor").value = activeSource;
 $("runButton").addEventListener("click", runProgram);
@@ -415,3 +767,10 @@ document.addEventListener("keydown", (event) => {
 });
 
 render();
+worldExperience = createWorldExperience({ canvas: $("worldThree"), labels: $("worldLabels") });
+worldExperience?.setTheme(dayTheme);
+worldExperience?.setMotion(motionEnabled);
+worldExperience?.setState({
+  lessonId: example.id, stepCount: 0, activeIndex: -1, inputItems: example.preview,
+  outputItems: [], accumulatorText: "", expressionText: example.source, done: false, error: false, mode: "subset",
+});
