@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#10120f" />
     <title>Lean Interpreter — Syntax 2026</title>
+    <link rel="icon" type="image/png" href="icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -125,7 +126,7 @@
             <section class="goal-card panel" aria-live="polite"><div class="goal-icon">λ</div><div class="goal-copy"><span class="goal-label" id="goalLabel">REDUCTION TRACE</span><div class="evaluation-trace" id="evaluationTrace"><div class="trace-line"><span class="trace-step">00</span><code id="goalText">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</code></div></div></div><span class="goal-state" id="goalState">Ready</span></section>
           </div>
 
-          <div class="player-controls"><div class="control-hint"><span class="hint-icon">⌘</span><span><kbd>←</kbd> <kbd>→</kbd> to step through</span></div><div class="control-buttons"><button class="previous-button" id="previousButton" disabled><span>←</span> Previous</button><button class="reset-button" id="resetButton"><span>↺</span> Reset</button><button class="next-button" id="nextButton"><span id="nextLabel">Reduce once</span><span class="next-arrow">→</span></button></div></div>
+          <div class="player-controls"><div class="control-hint"><span class="hint-icon">⌘</span><span><kbd>←</kbd> <kbd>→</kbd> to step through</span></div><div class="control-buttons"><button class="previous-button" id="previousButton" disabled><span>←</span> Previous</button><button class="reset-button" id="resetButton"><span>↺</span> Reset</button><button class="previous-button proof-line-button" id="proofLineButton" title="Highlight the next source line"><span>↧</span> Next proof line</button><button class="next-button" id="nextButton"><span id="nextLabel">Reduce once</span><span class="next-arrow">→</span></button></div></div>
         </main>
       </div>
       <aside class="code-drawer" id="codeDrawer" aria-label="Code and field notes" inert>
