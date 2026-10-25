@@ -373,7 +373,9 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       // ground plane so the complete island, rather than its base, sits in the
       // center of the view during each reduction flight.
       const focus = [position[0], position[1] + 3.8, position[2]];
-      const rigOffset = sub3(camera.eye, camera.target);
+      const currentOffset = sub3(camera.eye, camera.target);
+      const currentDistance = Math.hypot(...currentOffset) || 1;
+      const rigOffset = scale3(currentOffset, 31 / currentDistance);
       const next = { eye: v3(focus, rigOffset), target: focus };
       cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
       cameraTo = next;
@@ -615,29 +617,12 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
     const orbitEye = v3(camera.target, [Math.sin(yaw) * Math.cos(pitch) * distance, Math.sin(pitch) * distance, Math.cos(yaw) * Math.cos(pitch) * distance]);
     const pv = multiply(p, lookAt(orbitEye, camera.target));
     if (adventureMode && manifest?.islands) {
-      // Draw a stable window of route islands around the active position.
-      // Because the layout is derived from the reduction number, travel never
-      // swaps the whole forest out for the four home lesson islands.
+      // Keep the active route island as the only island in the adventure view.
+      // This lets each reduction read as a clear destination instead of a group.
       const step = Math.max(0, state.adventureStep | 0);
-      const first = Math.max(0, step - 5), last = step + 7;
-      const visibleRadius = 230;
-      for (let routeStep = first; routeStep <= last; routeStep += 1) {
-        const id = adventureModelFor(routeStep), config = manifest.islands[id];
-        const position = adventurePosition(routeStep);
-        if (!config || Math.hypot(position[0] - camera.target[0], position[2] - camera.target[2]) > visibleRadius) continue;
-        const active = routeStep === step;
-        drawModel(adventureIsleFor(routeStep), adventureRoot(id, routeStep, active ? 1 : 0.76), pv, motion ? now / 1000 : 0, null, true);
-
-        // Smaller unmarked isles make a forest around the route. They reuse
-        // the same authored geometry but have no labels, guide, or lesson UI.
-        if (routeStep % 2 === 0) {
-          const satelliteId = adventureModelFor(routeStep + 2), satelliteConfig = manifest.islands[satelliteId];
-          const angle = routeStep * 2.17 + 1.1, radius = 48 + (routeStep % 3) * 8;
-          const satellitePosition = [position[0] + Math.cos(angle) * radius, position[1] + 10 + (routeStep % 4) * 2, position[2] + Math.sin(angle) * radius];
-          if (satelliteConfig && Math.hypot(satellitePosition[0] - camera.target[0], satellitePosition[2] - camera.target[2]) <= visibleRadius) {
-            drawModel(adventureIsleFor(10000 + routeStep), forestMatrix(satellitePosition, angle, 0.3 + (routeStep % 3) * 0.035), pv, motion ? now / 1000 : 0, null, true);
-          }
-        }
+      const id = adventureModelFor(step);
+      if (manifest.islands[id]) {
+        drawModel(adventureIsleFor(step), adventureRoot(id, step), pv, motion ? now / 1000 : 0, null, true);
       }
     } else {
       for (const [id, config] of Object.entries(manifest?.islands ?? {})) {
