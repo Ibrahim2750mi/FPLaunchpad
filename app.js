@@ -45,6 +45,7 @@ let activeSource = example.source;
 let engine = null;
 let response = null;
 let history = [];
+let proofLineIndex = -1;
 let engineError = "";
 let executionMode = "subset";
 let customProgram = false;
@@ -77,6 +78,7 @@ function selectExample(id) {
   if (!next) return;
   leaveAdventure();
   example = next;
+  proofLineIndex = -1;
   playStepTone(392, 0.08);
   customProgram = false;
   startExample();
@@ -85,6 +87,7 @@ function selectExample(id) {
 function startExample() {
   runGeneration += 1;
   history = [];
+  proofLineIndex = -1;
   executionMode = "subset";
   activeSource = example.source;
   $("sourceEditor").value = activeSource;
@@ -94,6 +97,7 @@ function startExample() {
 
 function advance() {
   if (executionMode !== "subset" || !engine || !response || response.done || response.error) return;
+  proofLineIndex = -1;
   history.push(response);
   const previous = response;
   response = engine.stepForUi(response.machine);
@@ -113,12 +117,22 @@ function advance() {
 
 function rewind() {
   if (executionMode !== "subset" || !history.length) return;
+  proofLineIndex = -1;
   response = history.pop();
   if (adventureActive) adventureIslandIndex = Math.max(0, adventureIslandIndex - 1);
   render();
 }
 
+function advanceProofLine() {
+  const lines = activeSource.split("\n");
+  if (proofLineIndex + 1 >= lines.length) return;
+  proofLineIndex += 1;
+  setCodeDrawerOpen(true);
+  render();
+}
+
 function reset() {
+  proofLineIndex = -1;
   if (adventureActive && engine) {
     history = [];
     adventureIslandIndex = 0;
@@ -154,6 +168,7 @@ async function runProgram() {
   runGeneration += 1;
   const generation = runGeneration;
   activeSource = source;
+  proofLineIndex = -1;
   customProgram = true;
   example = {
     id: "custom",
@@ -331,7 +346,7 @@ function renderCode() {
     } else {
       visibleLine = escapeHtml(line);
     }
-    const activeLine = focusStart >= lineStart && focusStart <= lineEnd;
+    const activeLine = proofLineIndex === lineIndex || (proofLineIndex < 0 && focusStart >= lineStart && focusStart <= lineEnd);
     return `<div class="code-line ${activeLine ? "current" : ""}" data-line="${lineIndex}"><span class="line-number">${String(lineIndex + 1).padStart(2, "0")}</span><span class="line-content">${visibleLine}</span></div>`;
   }).join("");
 }
@@ -522,6 +537,12 @@ function runtimeTag() {
 }
 
 function renderEvaluationTrace(currentExpression) {
+  if (proofLineIndex >= 0) {
+    const lines = activeSource.split("\n");
+    const line = lines[proofLineIndex] || "(blank line)";
+    $("evaluationTrace").innerHTML = `<div class="trace-line is-current"><span class="trace-step">${String(proofLineIndex + 1).padStart(2, "0")}</span><div class="trace-content"><code>${highlightExpression(line || " ")}</code><small>Source line selected · not executed independently by Lean</small></div></div>`;
+    return;
+  }
   const states = history.length ? [...history, response].filter(Boolean) : [response].filter(Boolean);
   const entries = states.length ? states : [{ expressionText: currentExpression, stepCount: 0 }];
   $("evaluationTrace").innerHTML = entries.map((state, index) => {
@@ -559,15 +580,18 @@ function render() {
   $("fileName").textContent = example.file;
   $("parserStatus").textContent = runtimeTag();
   $("modeBadge").textContent = executionMode.startsWith("lean") ? "ACTUAL LEAN 4" : "TEACHING SUBSET";
-  $("goalLabel").textContent = adventureActive ? `ISLAND ${adventureIslandIndex + 1} · REDUCTION TRACE` : "REDUCTION TRACE";
+  $("goalLabel").textContent = proofLineIndex >= 0 ? "PROOF SOURCE LINE" : adventureActive ? `ISLAND ${adventureIslandIndex + 1} · REDUCTION TRACE` : "REDUCTION TRACE";
   $("nextLabel").textContent = response?.done ? "Complete" : response?.stepCount ? "Next reduction" : "Reduce once";
+  $("proofLineButton").disabled = proofLineIndex + 1 >= activeSource.split("\n").length || executionMode === "lean-loading";
   const subsetCanStep = executionMode === "subset" && engine && response && !response.done && !response.error;
   $("nextButton").disabled = !subsetCanStep;
   $("previousButton").disabled = executionMode !== "subset" || history.length === 0;
   $("resetButton").disabled = !engine || executionMode === "lean-loading";
   $("runButton").disabled = !engine || executionMode === "lean-loading";
   $("sourceEditor").disabled = executionMode === "lean-loading";
-  $("codeStatus").textContent = response?.error
+  $("codeStatus").textContent = proofLineIndex >= 0
+    ? "Source line selected · not executed independently by Lean"
+    : response?.error
     ? response.error
     : executionMode === "lean" ? "Executed by the Lean 4 WebAssembly runtime"
     : executionMode === "lean-loading" ? "Loading actual Lean 4 runtime…"
@@ -577,7 +601,9 @@ function render() {
     ? (response.error ? "Lean 4 reported an error" : response.stdout || "Lean 4 accepted this program")
     : response?.expressionText || activeSource;
   renderEvaluationTrace(expression);
-  $("goalState").textContent = response?.error ? "Error" : executionMode === "lean" ? "Lean 4" : response?.done ? "Complete" : response?.stepCount ? "Reducing" : "Ready";
+  $("goalState").textContent = proofLineIndex >= 0
+    ? `Line ${proofLineIndex + 1} / ${activeSource.split("\n").length}`
+    : response?.error ? "Error" : executionMode === "lean" ? "Lean 4" : response?.done ? "Complete" : response?.stepCount ? "Reducing" : "Ready";
   $("goalState").classList.toggle("error", Boolean(response?.error));
   $("goalState").classList.toggle("solved", Boolean(response?.done && !response?.error));
   if (executionMode === "lean") $("runtimeMessage").textContent = "Ran by actual Lean 4 · view generated from syntax cues";
@@ -960,6 +986,7 @@ startWorldMotion();
 $("sourceEditor").value = activeSource;
 $("runButton").addEventListener("click", runProgram);
 $("nextButton").addEventListener("click", advance);
+$("proofLineButton").addEventListener("click", advanceProofLine);
 $("previousButton").addEventListener("click", rewind);
 $("resetButton").addEventListener("click", reset);
 document.addEventListener("keydown", (event) => {
