@@ -127,4 +127,4 @@ isSupportedSymbol symbol =
   symbol == ":=" || symbol == "=>" || symbol == "->" || symbol == "==" || symbol == "<="
     || symbol == "=" || symbol == "+" || symbol == "-" || symbol == "*"
     || symbol == "(" || symbol == ")" || symbol == "[" || symbol == "]"
-    || symbol == "," || symbol == ";" || symbol == ":"
+    || symbol == "," || symbol == ":"

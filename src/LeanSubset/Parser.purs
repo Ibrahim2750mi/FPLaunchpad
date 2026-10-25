@@ -24,7 +24,7 @@ parse tokens = parseCommands tokens []
       Just { head: token, tail } -> case token.kind of
         EndToken -> Right commands
         DirectiveToken "eval" -> do
-          Tuple expression rest <- parseExpression tail
+          Tuple expression rest <- parseExpression (skipNewlines tail)
           let location = { start: token.start, end: (spanOf expression).end }
           parseCommands (requireBoundary rest) (Array.snoc commands (Eval expression location))
         KeywordToken "def" -> do
@@ -36,7 +36,7 @@ parse tokens = parseCommands tokens []
         _ -> Left ("Expected #eval or def at character " <> show token.start <> ".")
 
   skipSeparators remaining = case Array.uncons remaining of
-    Just { head: token, tail } | token.kind == NewlineToken || token.kind == SymbolToken ";" -> skipSeparators tail
+    Just { head: token, tail } | token.kind == NewlineToken -> skipSeparators tail
     _ -> remaining
 
   requireBoundary remaining = case Array.uncons remaining of
@@ -138,9 +138,20 @@ parseLet recurse start tokens = do
   Tuple name rest <- expectName tokens
   Tuple _ assignRest <- expectSymbol ":=" rest
   Tuple value valueRest <- recurse assignRest
-  Tuple _ bodyRest <- expectSymbol ";" valueRest
+  bodyRest <- requireLetBody valueRest
   Tuple body remaining <- recurse bodyRest
   Right (Tuple (Let name value body { start: start.start, end: (spanOf body).end }) remaining)
+
+requireLetBody :: Array Token -> Either String (Array Token)
+requireLetBody tokens = case Array.uncons tokens of
+  Just { head: token, tail } | token.kind == NewlineToken -> Right (skipNewlines tail)
+  Just { head: token } -> Left ("Expected a new line after the let value at character " <> show token.start <> ".")
+  Nothing -> Left "Expected a new line and let body, but reached the end of input."
+
+skipNewlines :: Array Token -> Array Token
+skipNewlines tokens = case Array.uncons tokens of
+  Just { head: token, tail } | token.kind == NewlineToken -> skipNewlines tail
+  _ -> tokens
 
 parseList :: RecursiveParser -> Token -> Array Token -> Array Expr -> Parsed Expr
 parseList recurse opening tokens items = case Array.uncons tokens of

@@ -19,7 +19,7 @@ Open `http://localhost:8001`.
 ## Supported syntax
 
 - Natural number literals and lists, such as `[1, 2, 3]`
-- `let name := value; body`
+- Indentation-style `let` bindings on separate lines, followed by the body on its own line
 - `fun x => body` and top-level `def name := expression`
 - Function application and `+`, `-`, `*`
 - `#eval expression`
