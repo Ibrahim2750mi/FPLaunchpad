@@ -390,6 +390,7 @@ body[data-theme="day"] .world-sky{inset:-48%}
 .world-three{z-index:1;display:block}
 .world-labels{z-index:2}
 .world-3d-ready .world-camera{transform:none!important}
+.is-looking,.is-looking *{user-select:none!important;-webkit-user-select:none!important}
 .world-3d-ready .world-layer:not(.world-sky):not(.world-islands){display:block}
 .world-3d-ready .world-islands,.world-3d-ready .world-particles{display:none}
 
@@ -698,8 +699,8 @@ body.adventure-running .goal-card{bottom:88px}
 body.adventure-running .player-controls{right:clamp(16px,3vw,42px);bottom:26px}
 body.adventure-running .previous-button,body.adventure-running .reset-button{color:#fff5e5}
 body.adventure-running .next-button{background:linear-gradient(110deg,#f1d493,#fff0c2);color:#28203b}
-body.portal-flight .world-scene::before{content:"";position:absolute;z-index:6;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 0 5%,rgba(246,223,177,.9) 5.2%,rgba(222,208,255,.42) 6%,transparent 17%),radial-gradient(ellipse at center,rgba(10,8,31,.96),transparent 74%);animation:portalPass 2s cubic-bezier(.2,.75,.25,1) both}
-@keyframes portalPass{0%{opacity:0;scale:.25}18%{opacity:1;scale:.55}70%{opacity:.9;scale:2.4}100%{opacity:0;scale:5}}
+body.portal-flight .world-scene::before{content:"";position:absolute;z-index:6;inset:0;pointer-events:none;background:radial-gradient(ellipse at var(--portal-x,50%) var(--portal-y,50%),transparent 0 4%,rgba(246,223,177,.94) 4.3%,hsla(var(--portal-hue,250deg),80%,88%,.54) 5.5%,transparent 17%),radial-gradient(ellipse at var(--portal-x,50%) var(--portal-y,50%),rgba(10,8,31,.97),transparent 74%);filter:hue-rotate(var(--portal-hue,0deg));transform-origin:var(--portal-x,50%) var(--portal-y,50%);animation:portalPass var(--portal-duration,2s) cubic-bezier(.2,.75,.25,1) both}
+@keyframes portalPass{0%{opacity:0;transform:scale(.25) rotate(0)}18%{opacity:1;transform:scale(.55) rotate(calc(var(--portal-turn,0deg)*.25))}70%{opacity:.9;transform:scale(2.4) rotate(calc(var(--portal-turn,0deg)*.75))}100%{opacity:0;transform:scale(5) rotate(var(--portal-turn,0deg))}}
 @media(max-width:620px){
  .constellation-map{top:52px;right:7px;width:min(318px,calc(100vw - 14px));padding:12px 13px 10px}
  .map-route{min-height:44px}.home-constellations .star-chart{height:126px}

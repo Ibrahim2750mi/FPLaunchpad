@@ -201,8 +201,15 @@ function beginAdventure() {
   adventureActive = true;
   adventureIslandIndex = 0;
   worldExperience?.setAdventureMode(true);
+  const worldScene = $("worldScene");
+  const portalDuration = 1850 + Math.random() * 650;
+  worldScene?.style.setProperty("--portal-x", `${38 + Math.random() * 24}%`);
+  worldScene?.style.setProperty("--portal-y", `${38 + Math.random() * 24}%`);
+  worldScene?.style.setProperty("--portal-duration", `${portalDuration}ms`);
+  worldScene?.style.setProperty("--portal-hue", `${-16 + Math.random() * 38}deg`);
+  worldScene?.style.setProperty("--portal-turn", `${-9 + Math.random() * 18}deg`);
   document.body.classList.add("adventure-running", "portal-flight");
-  window.setTimeout(() => document.body.classList.remove("portal-flight"), 2100);
+  window.setTimeout(() => document.body.classList.remove("portal-flight"), portalDuration + 100);
   playStepTone(659, 0.28);
 }
 
@@ -1050,11 +1057,13 @@ skyNavigation.querySelectorAll("[data-sky-island]").forEach((node) => {
 });
 
 let pointerDrag = null;
-const dragBlockSelector = "button,a,input,textarea,select,summary,[contenteditable='true'],.constellation-map";
+const appShell = $("appShell");
+const dragBlockSelector = "button,a,input,textarea,select,summary,[contenteditable='true']";
 window.addEventListener("pointerdown", (event) => {
-  if (!event.isPrimary || event.button !== 0 || event.target.closest(dragBlockSelector)) return;
-  pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY };
+  if (!event.isPrimary || event.button !== 0 || event.target.closest?.(dragBlockSelector)) return;
+  pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, pickable: !event.target.closest?.(".constellation-map") };
   document.body.classList.add("is-looking");
+  try { appShell?.setPointerCapture(event.pointerId); } catch { /* The pointer may have been released before capture. */ }
   event.preventDefault();
 }, { passive: false });
 window.addEventListener("pointermove", (event) => {
@@ -1068,10 +1077,16 @@ window.addEventListener("pointermove", (event) => {
 }, { passive: true });
 const stopLooking = (event) => {
   if (pointerDrag?.id !== event.pointerId) return;
-  const clicked = Math.hypot(event.clientX - pointerDrag.startX, event.clientY - pointerDrag.startY) < 8;
+  const drag = pointerDrag;
+  const clicked = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 8;
   pointerDrag = null;
   document.body.classList.remove("is-looking");
-  if (clicked) worldExperience?.pickIsland(event.clientX, event.clientY);
+  if (clicked && drag.pickable) worldExperience?.pickIsland(event.clientX, event.clientY);
 };
 window.addEventListener("pointerup", stopLooking, { passive: true });
 window.addEventListener("pointercancel", stopLooking, { passive: true });
+window.addEventListener("blur", () => {
+  if (!pointerDrag) return;
+  pointerDrag = null;
+  document.body.classList.remove("is-looking");
+}, { passive: true });

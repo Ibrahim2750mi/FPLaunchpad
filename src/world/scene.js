@@ -178,7 +178,7 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
   const ctx = labels.getContext("2d");
   const state = { lessonId: "map", adventureStep: 0, stepCount: 0, activeIndex: -1, inputItems: [], outputItems: [], expressionText: "", done: false, error: false, mode: "subset" };
   const models = new Map();
-  let manifest, guide, day = false, motion = true, overview = false, adventureMode = false, orbitYaw = 0, orbitPitch = 0, previousKey = "", transitionAt = 0, flightAt = 0, flightDuration = 1850, guideArrivalPending = false;
+  let manifest, guide, day = false, motion = true, overview = false, adventureMode = false, orbitYaw = 0, orbitPitch = 0, previousKey = "", transitionAt = 0, flightAt = 0, flightDuration = 1850, flightArc = 0.55, guideArrivalPending = false;
   let camera = { eye: [0, 12, 36], target: [0, 0, 0] }, cameraFrom = null, cameraTo = null;
   let guideFrom = null, guideTo = null;
   let islandHotspots = [], hoveredIslandId = null;
@@ -256,7 +256,8 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
       cameraTo = next;
       flightAt = now;
-      flightDuration = newIsland ? 1800 : 1100;
+      flightDuration = (newIsland ? 1800 : 1100) * (0.94 + Math.random() * 0.12);
+      flightArc = 0.45 + Math.random() * 0.35;
       if (!motion) { camera = next; cameraFrom = cameraTo = null; }
       return;
     }
@@ -279,7 +280,8 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
     cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
     cameraTo = next;
     flightAt = now;
-    flightDuration = newIsland ? 2600 : 1450;
+    flightDuration = (newIsland ? 2600 : 1450) * (0.94 + Math.random() * 0.12);
+    flightArc = (newIsland ? 1.05 : 0.45) + Math.random() * (newIsland ? 0.5 : 0.3);
     if (!motion) { camera = next; cameraFrom = cameraTo = null; }
   }
 
@@ -472,7 +474,7 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
     const flight = cameraTo ? (motion ? clamp((now - flightAt) / flightDuration, 0, 1) : 1) : 1;
     const eased = flight * flight * (3 - 2 * flight);
     if (cameraTo && cameraFrom) {
-      const arc = motion ? Math.sin(Math.PI * eased) * (flightDuration > 2000 ? 1.2 : 0.55) : 0;
+      const arc = motion ? Math.sin(Math.PI * eased) * flightArc : 0;
       camera.eye = cameraFrom.eye.map((v, i) => mix(v, cameraTo.eye[i], eased) + (i === 1 ? arc : 0));
       camera.target = cameraFrom.target.map((v, i) => mix(v, cameraTo.target[i], eased) + (i === 1 ? arc * 0.22 : 0));
       if (flight >= 1) { camera = cameraTo; cameraFrom = cameraTo = null; }
