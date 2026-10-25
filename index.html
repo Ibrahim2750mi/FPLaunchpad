@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="src/world/pointer.css" />
   </head>
   <body>
     <div class="world-scene" id="worldScene" aria-hidden="true">
@@ -118,7 +119,10 @@
       </div>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
+    <div class="sky-cursor" id="skyCursor" aria-hidden="true"><span class="cursor-aura"></span><span class="cursor-star">✦</span></div>
+    <div class="cursor-trail" id="cursorTrail" aria-hidden="true"></div>
     <audio id="ambientMusic" src="assets/audio/slow-stride-loop.ogg" loop preload="none"></audio>
     <script type="module" src="app.js"></script>
+    <script type="module" src="src/world/pointer.js"></script>
   </body>
 </html>

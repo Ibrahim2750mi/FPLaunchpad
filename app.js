@@ -534,7 +534,7 @@ $("musicToggle").addEventListener("click", async () => {
     ambientMusic.volume = 0;
     try {
       await ambientMusic.play();
-      fadeAmbientMusic(0.3);
+      fadeAmbientMusic(0.52);
       setToggleState($("musicToggle"), true, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
     } catch {
       setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
