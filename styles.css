@@ -218,6 +218,7 @@ body[data-theme="day"] .editor-card{background:rgba(42,61,101,.85)}
 
 .portal-entry{position:fixed;z-index:140;inset:0;width:100vw;height:100vh;height:100dvh;border:0;background:#070a24;opacity:1;visibility:visible;transition:opacity 1s ease,visibility 0s linear 1s}
 .portal-entry.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+.portal-entry.is-traveling{opacity:1;visibility:visible;pointer-events:none;transition:none}
 #musicToggle[hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){body[data-motion="off"] .world-bob,body[data-motion="off"] .world-clouds-back img,body[data-motion="off"] .world-clouds-front img{animation:none!important}body[data-motion="off"] .sample-item,body[data-motion="off"] .world-toggle{transition:none!important}}
 

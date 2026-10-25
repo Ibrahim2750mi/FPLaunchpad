@@ -178,6 +178,7 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
   const ctx = labels.getContext("2d");
   const state = { lessonId: "map", adventureStep: 0, stepCount: 0, activeIndex: -1, inputItems: [], outputItems: [], expressionText: "", done: false, error: false, mode: "subset" };
   const models = new Map();
+  const adventureIsles = new Map();
   let manifest, guide, day = false, motion = true, overview = false, adventureMode = false, orbitYaw = 0, orbitPitch = 0, previousKey = "", transitionAt = 0, flightAt = 0, flightDuration = 1850, flightArc = 0.55, guideArrivalPending = false;
   let camera = { eye: [0, 12, 36], target: [0, 0, 0] }, cameraFrom = null, cameraTo = null;
   let guideFrom = null, guideTo = null;
@@ -199,13 +200,115 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
     return new Float32Array([c, 0, -sn, 0, 0, scale, 0, 0, sn, 0, c, 0, position[0], position[1], position[2], 1]);
   };
   const adventureModelFor = (step) => ["map", "fold", "let", "function"][Math.abs(step) % 4];
+  const adventurePalettes = [
+    { grass: "#739b76", rock: "#665b75", stone: "#94829a", leaf: "#b4cc83", glow: "#f3d79c" },
+    { grass: "#6d968c", rock: "#536779", stone: "#8096a2", leaf: "#9ac7b2", glow: "#b9e6e0" },
+    { grass: "#9d8b68", rock: "#66566b", stone: "#998072", leaf: "#c3aa78", glow: "#ffd78f" },
+    { grass: "#6d809d", rock: "#535675", stone: "#8586a6", leaf: "#a8bed0", glow: "#d9c8ff" },
+    { grass: "#7c9670", rock: "#565e64", stone: "#89917c", leaf: "#c4c989", glow: "#e8e6a9" },
+  ];
+  const createAdventureIsle = (seed) => {
+    let randomState = (Math.abs(seed) + 1) * 2654435761 >>> 0;
+    const random = () => { randomState = randomState + 0x6D2B79F5 | 0; let t = Math.imul(randomState ^ randomState >>> 15, 1 | randomState); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const palette = adventurePalettes[Math.abs(seed) % adventurePalettes.length];
+    const positions = [], normals = [], colors = [], indices = [];
+    const rgb = (hex, shade = 1) => [1, 3, 5].map((at) => Math.max(0, Math.min(1, parseInt(hex.slice(at, at + 2), 16) / 255 * shade)));
+    const pushTriangle = (a, b, c, color) => {
+      const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const normal = norm3(cross3(ab, ac)), faceColor = [...rgb(color, 0.84 + random() * 0.3), 1];
+      for (const point of [a, b, c]) { positions.push(...point); normals.push(...normal); colors.push(...faceColor); indices.push(indices.length); }
+    };
+    const pushQuad = (a, b, c, d, color) => { pushTriangle(a, b, c, color); pushTriangle(a, c, d, color); };
+    const ring = (radius, y, count, phase, warp = 0.1) => Array.from({ length: count }, (_, i) => {
+      const angle = i / count * Math.PI * 2 + phase;
+      const wobble = 1 + Math.sin(angle * 3 + seed) * warp + Math.cos(angle * 5 - seed * 0.7) * warp * 0.55;
+      return [Math.cos(angle) * radius * wobble, y + Math.sin(angle * 2 + seed) * warp * 0.65, Math.sin(angle) * radius * wobble];
+    });
+    const cone = (x, y, z, height, radius, color, count = 7, topRadius = 0) => {
+      const phase = random() * Math.PI * 2;
+      const lower = ring(radius, y, count, phase, 0.025).map(([px, py, pz]) => [px + x, py, pz + z]);
+      const upper = ring(topRadius, y + height, count, phase, 0.02).map(([px, py, pz]) => [px + x, py, pz + z]);
+      for (let i = 0; i < count; i += 1) {
+        const next = (i + 1) % count;
+        if (topRadius <= 0.001) pushTriangle(lower[i], lower[next], [x, y + height, z], color);
+        else pushQuad(lower[i], lower[next], upper[next], upper[i], color);
+        pushTriangle([x, y, z], lower[next], lower[i], color);
+      }
+    };
+
+    const sides = 22, phase = random() * Math.PI * 2, baseRadius = 8.5 + random() * 2.2;
+    const layers = [
+      { y: 0.15, radius: 1, color: palette.grass },
+      { y: -1.3 - random() * 0.5, radius: 0.91, color: palette.rock },
+      { y: -4.2 - random() * 0.8, radius: 0.65, color: palette.rock },
+      { y: -7.2 - random() * 0.8, radius: 0.37, color: palette.stone },
+      { y: -9.5 - random() * 1.2, radius: 0.08, color: palette.rock },
+    ];
+    const rings = layers.map((layer) => ring(baseRadius * layer.radius, layer.y, sides, phase, layer.radius > 0.3 ? 0.11 : 0.18));
+    for (let layer = 0; layer < rings.length - 1; layer += 1) {
+      for (let i = 0; i < sides; i += 1) {
+        const next = (i + 1) % sides;
+        pushQuad(rings[layer][i], rings[layer][next], rings[layer + 1][next], rings[layer + 1][i], layers[layer + 1].color);
+      }
+    }
+    const center = [0, 0.22, 0], top = rings[0];
+    for (let i = 0; i < sides; i += 1) pushTriangle(center, top[(i + 1) % sides], top[i], palette.grass);
+
+    const treeCount = 3 + Math.floor(random() * 5);
+    for (let i = 0; i < treeCount; i += 1) {
+      const angle = phase + i * 2.399 + random() * 0.3, radius = baseRadius * (0.24 + random() * 0.43);
+      const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius, height = 4.3 + random() * 4.8;
+      cone(x, 0.18, z, height * 0.46, 0.24 + random() * 0.12, palette.stone, 6, 0.16);
+      cone(x, 0.18 + height * 0.32, z, height * 0.55, 1.25 + random() * 0.9, palette.leaf, 7);
+      if (random() > 0.48) cone(x + .3, 0.18 + height * .55, z - .25, height * .35, .95, palette.grass, 7);
+    }
+    const featureAngle = phase + random() * Math.PI * 2, featureRadius = baseRadius * (0.05 + random() * 0.19);
+    const fx = Math.cos(featureAngle) * featureRadius, fz = Math.sin(featureAngle) * featureRadius;
+    const motif = Math.abs(seed) % 4;
+    if (motif === 0) {
+      cone(fx, .25, fz, 7 + random() * 5, .75 + random() * .7, palette.glow, 6);
+      cone(fx + 1.1, .25, fz + .7, 4.3, .48, palette.stone, 6);
+    } else if (motif === 1) {
+      cone(fx - 1.4, .2, fz, 4.8, .48, palette.stone, 6, .38);
+      cone(fx + 1.4, .2, fz, 4.8, .48, palette.stone, 6, .38);
+      cone(fx, 4.35, fz, 1, 1.9, palette.glow, 6, 1.6);
+    } else if (motif === 2) {
+      cone(fx, .25, fz, 3.8, 1.3, palette.stone, 7, .9);
+      cone(fx, 3.9, fz, 4.7, .48, palette.glow, 5);
+      cone(fx + 1.8, .25, fz - 1.4, 2.9, .7, palette.leaf, 6);
+    } else {
+      cone(fx, .25, fz, 5.6, 1.4, palette.leaf, 7);
+      cone(fx - 1.1, .25, fz + 1.5, 3.2, .6, palette.glow, 5);
+    }
+    for (let i = 0; i < 5; i += 1) {
+      const angle = random() * Math.PI * 2, radius = baseRadius * (.72 + random() * .36);
+      cone(Math.cos(angle) * radius, -1.2 - random() * 3, Math.sin(angle) * radius, 1.5 + random() * 3, .45 + random() * .7, i % 2 ? palette.rock : palette.glow, 5);
+    }
+    const upload = (target, data) => { const buffer = gl.createBuffer(); gl.bindBuffer(target, buffer); gl.bufferData(target, data, gl.STATIC_DRAW); return buffer; };
+    return {
+      nodes: [{ translation: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1], children: [] }],
+      baseNodes: [{ translation: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] }],
+      roots: [0], animations: [],
+      drawables: [{ nodeIndex: 0, material: "paint", indexCount: indices.length, indexType: gl.UNSIGNED_SHORT,
+        indexBuffer: upload(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices)),
+        attrs: {
+          POSITION: { buffer: upload(gl.ARRAY_BUFFER, new Float32Array(positions)), components: 3, componentType: 5126, normalized: false },
+          NORMAL: { buffer: upload(gl.ARRAY_BUFFER, new Float32Array(normals)), components: 3, componentType: 5126, normalized: false },
+          COLOR_0: { buffer: upload(gl.ARRAY_BUFFER, new Float32Array(colors)), components: 4, componentType: 5126, normalized: false },
+        } }],
+    };
+  };
+  const adventureIsleFor = (seed) => {
+    if (!adventureIsles.has(seed)) adventureIsles.set(seed, createAdventureIsle(seed));
+    return adventureIsles.get(seed);
+  };
   const adventurePosition = (step) => {
     const origin = manifest?.islands?.map?.world?.position ?? [0, 0, 0];
     if (step === 0) return [...origin];
     // A deterministic golden-angle route keeps every reduction on a unique
     // isle while keeping adjacent destinations close enough for a camera flight.
     const angle = step * 2.399963229728653;
-    const radius = 32 * Math.sqrt(step);
+    const radius = 20 * Math.sqrt(step);
     return [origin[0] + Math.cos(angle) * radius, origin[1] + Math.sin(step * 1.37) * 5, origin[2] + Math.sin(angle) * radius];
   };
   const adventureRoot = (id, step, scale = null) => {
@@ -500,20 +603,20 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       const first = Math.max(0, step - 5), last = step + 7;
       const visibleRadius = 230;
       for (let routeStep = first; routeStep <= last; routeStep += 1) {
-        const id = adventureModelFor(routeStep), config = manifest.islands[id], model = models.get(id);
+        const id = adventureModelFor(routeStep), config = manifest.islands[id];
         const position = adventurePosition(routeStep);
-        if (!config || !model || Math.hypot(position[0] - camera.target[0], position[2] - camera.target[2]) > visibleRadius) continue;
+        if (!config || Math.hypot(position[0] - camera.target[0], position[2] - camera.target[2]) > visibleRadius) continue;
         const active = routeStep === step;
-        drawModel(model, adventureRoot(id, routeStep, active ? 1 : 0.76), pv, motion ? now / 1000 : 0, config.clips?.[0]?.name, true);
+        drawModel(adventureIsleFor(routeStep), adventureRoot(id, routeStep, active ? 1 : 0.76), pv, motion ? now / 1000 : 0, null, true);
 
         // Smaller unmarked isles make a forest around the route. They reuse
         // the same authored geometry but have no labels, guide, or lesson UI.
         if (routeStep % 2 === 0) {
-          const satelliteId = adventureModelFor(routeStep + 2), satelliteConfig = manifest.islands[satelliteId], satellite = models.get(satelliteId);
+          const satelliteId = adventureModelFor(routeStep + 2), satelliteConfig = manifest.islands[satelliteId];
           const angle = routeStep * 2.17 + 1.1, radius = 48 + (routeStep % 3) * 8;
           const satellitePosition = [position[0] + Math.cos(angle) * radius, position[1] + 10 + (routeStep % 4) * 2, position[2] + Math.sin(angle) * radius];
-          if (satellite && satelliteConfig && Math.hypot(satellitePosition[0] - camera.target[0], satellitePosition[2] - camera.target[2]) <= visibleRadius) {
-            drawModel(satellite, forestMatrix(satellitePosition, angle, 0.3 + (routeStep % 3) * 0.035), pv, motion ? now / 1000 : 0, satelliteConfig.clips?.[0]?.name, true);
+          if (satelliteConfig && Math.hypot(satellitePosition[0] - camera.target[0], satellitePosition[2] - camera.target[2]) <= visibleRadius) {
+            drawModel(adventureIsleFor(10000 + routeStep), forestMatrix(satellitePosition, angle, 0.3 + (routeStep % 3) * 0.035), pv, motion ? now / 1000 : 0, null, true);
           }
         }
       }

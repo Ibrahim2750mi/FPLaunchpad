@@ -53,6 +53,9 @@ let adventureActive = false;
 let adventureIslandIndex = 0;
 const adventureIsleModels = ["map", "fold", "let", "function"];
 const adventureModelForStep = (step) => adventureIsleModels[Math.abs(step) % adventureIsleModels.length];
+const isleAdjectives = ["Whispering", "Moonlit", "Amber", "Cloudbound", "Quiet", "Silver", "Dawnlit", "Hidden", "Velvet", "Luminous", "Faraway", "Singing", "Mossbound"];
+const isleNouns = ["Canopy", "Hollow", "Sanctum", "Grove", "Reach", "Haven", "Spire", "Garden", "Cove", "Observatory", "Passage", "Meadow", "Glade", "Refuge", "Lookout", "Orchard", "Crossing"];
+const adventureIsleName = (step) => `${isleAdjectives[Math.abs(step * 7 + 3) % isleAdjectives.length]} ${isleNouns[Math.abs(step * 5 + 1) % isleNouns.length]}`;
 let runGeneration = 0;
 let leanRuntimePromise = null;
 let stepSoundsEnabled = true;
@@ -91,6 +94,7 @@ function startExample() {
 
 function advance() {
   if (executionMode !== "subset" || !engine || !response || response.done || response.error) return;
+  if (adventureActive) playPortalTravel();
   history.push(response);
   const previous = response;
   response = engine.stepForUi(response.machine);
@@ -110,6 +114,7 @@ function advance() {
 
 function rewind() {
   if (executionMode !== "subset" || !history.length) return;
+  if (adventureActive) playPortalTravel();
   response = history.pop();
   if (adventureActive) adventureIslandIndex = Math.max(0, adventureIslandIndex - 1);
   render();
@@ -117,6 +122,7 @@ function rewind() {
 
 function reset() {
   if (adventureActive && engine) {
+    playPortalTravel();
     history = [];
     adventureIslandIndex = 0;
     response = engine.startForUi(activeSource);
@@ -201,15 +207,8 @@ function beginAdventure() {
   adventureActive = true;
   adventureIslandIndex = 0;
   worldExperience?.setAdventureMode(true);
-  const worldScene = $("worldScene");
-  const portalDuration = 1850 + Math.random() * 650;
-  worldScene?.style.setProperty("--portal-x", `${38 + Math.random() * 24}%`);
-  worldScene?.style.setProperty("--portal-y", `${38 + Math.random() * 24}%`);
-  worldScene?.style.setProperty("--portal-duration", `${portalDuration}ms`);
-  worldScene?.style.setProperty("--portal-hue", `${-16 + Math.random() * 38}deg`);
-  worldScene?.style.setProperty("--portal-turn", `${-9 + Math.random() * 18}deg`);
-  document.body.classList.add("adventure-running", "portal-flight");
-  window.setTimeout(() => document.body.classList.remove("portal-flight"), portalDuration + 100);
+  document.body.classList.add("adventure-running");
+  playPortalTravel();
   playStepTone(659, 0.28);
 }
 
@@ -554,7 +553,7 @@ function render() {
     island.classList.toggle("is-active-island", island.dataset.island === displayedIsland);
   });
   $("islandName").textContent = adventureActive
-    ? `ISLE ${String(adventureIslandIndex + 1).padStart(2, "0")} · ${examples.find((item) => item.id === adventureModel)?.place.toUpperCase() || "OPEN SKY"}`
+    ? `ISLE ${String(adventureIslandIndex + 1).padStart(2, "0")} · ${adventureIsleName(adventureIslandIndex).toUpperCase()}`
     : examples.find((item) => item.id === example.id)?.place.toUpperCase() || "OPEN SKY";
   moveSceneToState();
   $("proofTitle").textContent = example.title;
@@ -714,12 +713,35 @@ $("musicToggle").addEventListener("click", async () => {
 });
 
 const portalEntry = $("portalEntry");
+let portalTravelActive = false;
 function sendPortalMusicState(enabled, unavailable = false) {
   portalEntry?.contentWindow?.postMessage({ type: "leanstepper:music-state", enabled, unavailable }, location.origin);
+}
+function playPortalTravel() {
+  if (!portalEntry || portalTravelActive) return;
+  portalTravelActive = true;
+  portalEntry.hidden = false;
+  portalEntry.inert = true;
+  portalEntry.setAttribute("aria-hidden", "true");
+  portalEntry.classList.remove("is-leaving");
+  portalEntry.classList.add("is-traveling");
+  portalEntry.contentWindow?.postMessage({ type: "leanstepper:portal-travel" }, location.origin);
+  window.setTimeout(() => {
+    if (!portalTravelActive) return;
+    portalTravelActive = false;
+    portalEntry.hidden = true;
+    portalEntry.classList.remove("is-traveling");
+  }, 3500);
 }
 window.toggleWorldMusicFromPortal = () => $("musicToggle").click();
 window.addEventListener("message", (event) => {
   if (event.origin !== location.origin || event.source !== portalEntry?.contentWindow) return;
+  if (event.data?.type === "leanstepper:portal-travel-complete") {
+    portalTravelActive = false;
+    portalEntry.hidden = true;
+    portalEntry.classList.remove("is-traveling");
+    return;
+  }
   if (event.data?.type !== "leanstepper:enter-world") return;
   portalEntry.inert = true;
   portalEntry.setAttribute("aria-hidden", "true");
