@@ -380,8 +380,8 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
       cameraTo = next;
       flightAt = now;
-      flightDuration = (newIsland ? 3000 : 1450) * (0.94 + Math.random() * 0.12);
-      flightArc = newIsland ? 0.9 + Math.random() * 0.3 : 0.45;
+      flightDuration = newIsland ? 2100 : 1600;
+      flightArc = newIsland ? 0.24 : 0.12;
       if (!motion) { camera = next; cameraFrom = cameraTo = null; }
       return;
     }
@@ -596,7 +596,11 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
     gl.useProgram(pipeline.program);
     gl.uniform1f(pipeline.uniforms.day, day ? 1 : 0);
     const flight = cameraTo ? (motion ? clamp((now - flightAt) / flightDuration, 0, 1) : 1) : 1;
-    const eased = flight * flight * (3 - 2 * flight);
+    // The quintic curve eases acceleration and deceleration more gently than
+    // smoothstep, which makes the longer adventure flights feel less abrupt.
+    const eased = adventureMode
+      ? flight * flight * flight * (flight * (flight * 6 - 15) + 10)
+      : flight * flight * (3 - 2 * flight);
     if (cameraTo && cameraFrom) {
       const arc = motion ? Math.sin(Math.PI * eased) * flightArc : 0;
       camera.eye = cameraFrom.eye.map((v, i) => mix(v, cameraTo.eye[i], eased) + (i === 1 ? arc : 0));
