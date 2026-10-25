@@ -94,7 +94,6 @@ function startExample() {
 
 function advance() {
   if (executionMode !== "subset" || !engine || !response || response.done || response.error) return;
-  if (adventureActive) playPortalTravel();
   history.push(response);
   const previous = response;
   response = engine.stepForUi(response.machine);
@@ -114,7 +113,6 @@ function advance() {
 
 function rewind() {
   if (executionMode !== "subset" || !history.length) return;
-  if (adventureActive) playPortalTravel();
   response = history.pop();
   if (adventureActive) adventureIslandIndex = Math.max(0, adventureIslandIndex - 1);
   render();
@@ -122,7 +120,6 @@ function rewind() {
 
 function reset() {
   if (adventureActive && engine) {
-    playPortalTravel();
     history = [];
     adventureIslandIndex = 0;
     response = engine.startForUi(activeSource);
@@ -985,6 +982,7 @@ worldExperience = createWorldExperience({
     skyNavigation.setAttribute("aria-hidden", String(!facing));
   },
   onIslandSelect: (id) => {
+    playPortalTravel();
     setMapOpen(false);
     selectExample(id);
   },
@@ -1035,7 +1033,7 @@ function setMapOpen(open) {
 mapToggle.addEventListener("click", () => setMapOpen(constellationMap.hidden));
 $("mapClose").addEventListener("click", () => setMapOpen(false));
 $("homeRoute").addEventListener("click", () => {
-  if (adventureActive) { leaveAdventure(); selectExample("map"); }
+  if (adventureActive) { playPortalTravel(); leaveAdventure(); selectExample("map"); }
   showMapView("home");
 });
 $("adventureRoute").addEventListener("click", () => showMapView("adventure"));
@@ -1054,6 +1052,7 @@ document.querySelectorAll(".map-star").forEach((star) => {
   star.addEventListener("click", () => {
     const id = star.dataset.island;
     if (!examples.some((item) => item.id === id)) return;
+    playPortalTravel();
     setMapOpen(false);
     selectExample(id);
   });
@@ -1061,6 +1060,7 @@ document.querySelectorAll(".map-star").forEach((star) => {
 
 $("skyHome").addEventListener("click", () => {
   worldExperience?.faceForward();
+  playPortalTravel();
   setMapOpen(false);
   if (adventureActive) leaveAdventure();
   selectExample("map");
@@ -1073,6 +1073,7 @@ $("skyAdventure").addEventListener("click", () => {
 skyNavigation.querySelectorAll("[data-sky-island]").forEach((node) => {
   node.addEventListener("click", () => {
     worldExperience?.faceForward();
+    playPortalTravel();
     setMapOpen(false);
     selectExample(node.dataset.skyIsland);
   });
