@@ -18,6 +18,10 @@ npm run serve
 
 Open `http://localhost:8001`.
 
+## Licensing
+
+Project source is licensed under GPL-3.0-only; bundled art, runtime/build dependencies, and externally loaded fonts have separate notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The ambient music and site icon still need verified source/license information before redistribution; see that notice file.
+
 ## Supported syntax
 
 - Natural number literals and lists, such as `[1, 2, 3]`
