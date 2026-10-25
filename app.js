@@ -4,7 +4,7 @@ const examples = [
   {
     id: "map", place: "Verdant Isle", file: "map_values.lean", title: "Map each value",
     description: "Watch a function transform each list item in turn.", kind: "map", preview: ["1", "2", "3"],
-    source: "#eval let xs := [1, 2, 3]; let double := fun x => x * 2; List.map double xs",
+    source: "#eval\n  let xs := [1, 2, 3]\n  let double := fun x => x * 2\n  List.map double xs",
   },
   {
     id: "fold", place: "Ember Isle", file: "fold_a_list.lean", title: "Fold a list",
@@ -12,9 +12,14 @@ const examples = [
     source: "#eval List.foldl (fun acc x => acc + x) 0 [1, 2, 3]",
   },
   {
+    id: "graph", place: "Branching Grove", file: "growing_graph.lean", title: "Grow a computation graph",
+    description: "Watch each fold step add a connected node to the graph.", kind: "graph", preview: ["1", "2", "3", "4"],
+    source: "#eval List.foldl (fun acc x => acc + x) 0 [1, 2, 3, 4]",
+  },
+  {
     id: "let", place: "Frost Isle", file: "let_and_numbers.lean", title: "Reduce a let expression",
     description: "Substitute names, then reduce the arithmetic.", kind: "scalar", preview: [],
-    source: "#eval let x := 4; let y := x + 1; y * 2",
+    source: "#eval\n  let x := 4\n  let y := x + 1\n  y * 2",
   },
   {
     id: "function", place: "Cloud Library", file: "define_a_function.lean", title: "Call a function",
@@ -28,6 +33,7 @@ const examples = [
 const sceneAnchors = {
   map: { x: 0.5, y: 0.55 },
   fold: { x: 0.81, y: 0.53 },
+  graph: { x: 0.18, y: 0.3 },
   let: { x: 0.12, y: 0.65 },
   function: { x: 0.84, y: 0.19 },
   custom: { x: 0.5, y: 0.5 },
@@ -42,6 +48,11 @@ let history = [];
 let engineError = "";
 let executionMode = "subset";
 let customProgram = false;
+let adventureRequested = false;
+let adventureActive = false;
+let adventureIslandIndex = 0;
+const adventureIsleModels = ["map", "fold", "let", "function"];
+const adventureModelForStep = (step) => adventureIsleModels[Math.abs(step) % adventureIsleModels.length];
 let runGeneration = 0;
 let leanRuntimePromise = null;
 let stepSoundsEnabled = true;
@@ -61,6 +72,7 @@ import("./dist/lean-stepper.js").then((module) => {
 function selectExample(id) {
   const next = examples.find((item) => item.id === id);
   if (!next) return;
+  leaveAdventure();
   example = next;
   playStepTone(392, 0.08);
   customProgram = false;
@@ -82,6 +94,7 @@ function advance() {
   history.push(response);
   const previous = response;
   response = engine.stepForUi(response.machine);
+  if (adventureActive) adventureIslandIndex += 1;
   playStepTone(523, 0.12);
   if (response.done && !response.error) {
     response = {
@@ -98,10 +111,18 @@ function advance() {
 function rewind() {
   if (executionMode !== "subset" || !history.length) return;
   response = history.pop();
+  if (adventureActive) adventureIslandIndex = Math.max(0, adventureIslandIndex - 1);
   render();
 }
 
 function reset() {
+  if (adventureActive && engine) {
+    history = [];
+    adventureIslandIndex = 0;
+    response = engine.startForUi(activeSource);
+    render();
+    return;
+  }
   if (customProgram) runProgram();
   else startExample();
 }
@@ -120,6 +141,7 @@ function inferListPreview(source) {
 async function runProgram() {
   const source = $("sourceEditor").value;
   if (!source.trim()) {
+    adventureRequested = false;
     response = { error: "Enter Lean code to run.", done: true, stepCount: 0, expressionText: "" };
     executionMode = "subset";
     render();
@@ -166,10 +188,30 @@ async function runProgram() {
   if (supported) {
     executionMode = "subset";
     response = initial;
+    if (adventureRequested) beginAdventure();
     render();
   } else {
+    adventureRequested = false;
     await runWithLean4(source, generation);
   }
+}
+
+function beginAdventure() {
+  adventureRequested = false;
+  adventureActive = true;
+  adventureIslandIndex = 0;
+  worldExperience?.setAdventureMode(true);
+  document.body.classList.add("adventure-running", "portal-flight");
+  window.setTimeout(() => document.body.classList.remove("portal-flight"), 2100);
+  playStepTone(659, 0.28);
+}
+
+function leaveAdventure() {
+  adventureRequested = false;
+  adventureActive = false;
+  adventureIslandIndex = 0;
+  document.body.classList.remove("adventure-running", "adventure-setup", "portal-flight");
+  worldExperience?.setAdventureMode(false);
 }
 
 async function loadLeanRuntime(generation) {
@@ -258,7 +300,7 @@ function cleanLeanResult(result) {
 function renderSamples() {
   $("sampleList").innerHTML = examples.map((item) => `
     <button class="sample-item ${item.id === example.id ? "active" : ""}" type="button" aria-pressed="${item.id === example.id}" data-id="${item.id}">
-      <span class="sample-icon">${item.kind === "map" ? "✧" : item.kind === "fold" ? "◉" : item.kind === "let" ? "❄" : "☁"}</span>
+      <span class="sample-icon">${item.kind === "map" ? "✧" : item.kind === "fold" ? "◉" : item.kind === "graph" ? "⌘" : item.kind === "let" ? "❄" : "☁"}</span>
       <span class="sample-copy"><strong>${item.place}</strong><small>${item.title}</small></span>
       <span class="isle-arrow">${item.id === example.id ? "✦" : "↗"}</span>
     </button>`).join("");
@@ -296,7 +338,7 @@ function renderMapVisual() {
   const outputs = response?.outputItems || [];
   const active = response?.activeIndex ?? -1;
   if (!items.length) return `<div class="eval-empty">Waiting for a list value…</div>`;
-  return `<div class="eval-visual"><div class="eval-operation">List.map · input → result</div><div class="eval-list-row">${items.map((value, index) => {
+  return `<div class="eval-visual"><div class="eval-operation">${customProgram ? "YOUR CODE · MAP EACH VALUE" : "List.map · input → result"}</div><div class="eval-list-row">${items.map((value, index) => {
     const output = outputs[index] || "";
     const classes = ["eval-box", index === active ? "active" : "", output ? "done" : ""].filter(Boolean).join(" ");
     return `<div class="eval-cell"><div class="${classes}">${escapeHtml(value)}</div><span class="eval-output">${output ? `↓ ${escapeHtml(output)}` : "·"}</span></div>${index < items.length - 1 ? "<span class='eval-arrow'>→</span>" : ""}`;
@@ -309,7 +351,24 @@ function renderFoldVisual() {
   const accumulator = response?.accumulatorText || "0";
   if (!items.length) return `<div class="eval-empty">Waiting for a list value…</div>`;
   const current = active >= 0 ? items[active] : "";
-  return `<div class="eval-visual"><div class="eval-operation">List.foldl · accumulator + current item</div><div class="eval-acc-row"><span class="eval-acc-label">ACCUMULATOR</span><span class="eval-box accumulator">${escapeHtml(accumulator)}</span>${current ? `<span class="eval-acc-arrow">+</span><span class="eval-box active">${escapeHtml(current)}</span>` : response?.done ? `<span class="eval-acc-arrow">=</span><span class="eval-box accumulator">${escapeHtml(response.expressionText)}</span>` : ""}</div><div class="eval-list-row">${items.map((value, index) => `<div class="eval-cell"><div class="eval-box ${index === active ? "active" : index < active || response?.done ? "done" : ""}">${escapeHtml(value)}</div><span class="eval-output">item ${index + 1}</span></div>${index < items.length - 1 ? "<span class='eval-arrow'>→</span>" : ""}`).join("")}</div></div>`;
+  return `<div class="eval-visual"><div class="eval-operation">${customProgram ? "YOUR CODE · ACCUMULATE EACH VALUE" : "List.foldl · accumulator + current item"}</div><div class="eval-acc-row"><span class="eval-acc-label">ACCUMULATOR</span><span class="eval-box accumulator">${escapeHtml(accumulator)}</span>${current ? `<span class="eval-acc-arrow">+</span><span class="eval-box active">${escapeHtml(current)}</span>` : response?.done ? `<span class="eval-acc-arrow">=</span><span class="eval-box accumulator">${escapeHtml(response.expressionText)}</span>` : ""}</div><div class="eval-list-row">${items.map((value, index) => `<div class="eval-cell"><div class="eval-box ${index === active ? "active" : index < active || response?.done ? "done" : ""}">${escapeHtml(value)}</div><span class="eval-output">item ${index + 1}</span></div>${index < items.length - 1 ? "<span class='eval-arrow'>→</span>" : ""}`).join("")}</div></div>`;
+}
+
+function renderGraphVisual() {
+  const items = example.preview.map(Number);
+  const running = [];
+  let total = 0;
+  items.forEach((item) => {
+    total += item;
+    running.push(total);
+  });
+  const count = response?.done ? items.length : Math.min(items.length, Math.max(0, (response?.activeIndex ?? -1) + 1));
+  const nodes = [`<div class="graph-node graph-root"><small>START</small><strong>0</strong></div>`];
+  for (let index = 0; index < count; index += 1) {
+    const active = !response?.done && index === (response?.activeIndex ?? -1);
+    nodes.push(`<span class="graph-edge" aria-hidden="true">→</span><div class="graph-node ${active ? "active" : "complete"}"><small>${escapeHtml(String(index + 1))} · ${escapeHtml(items[index])}</small><strong>${escapeHtml(String(running[index]))}</strong></div>`);
+  }
+  return `<div class="eval-visual graph-visual"><div class="eval-operation">List.foldl · computation graph</div><div class="graph-caption">Each node combines the previous total with the next list value.</div><div class="graph-row" aria-label="Fold computation graph">${nodes.join("")}</div><div class="graph-source">${count} of ${items.length} combine steps shown</div></div>`;
 }
 
 function inspectLogic(source) {
@@ -349,13 +408,42 @@ function renderLeanView() {
   return `<div class="generated-view"><div class="generated-title">Generated code overview</div><div class="generated-badges">${featureRows}</div><div class="generated-flow">${flow}</div><div class="generated-explanation"><strong>How to read this:</strong> ${explanations}<br>This overview is inferred from visible syntax; Lean 4 supplies the actual compile/run result below.</div><pre class="lean-output ${response?.error ? "error" : ""}">${escapeHtml(output)}</pre></div>`;
 }
 
+function renderCustomVisual() {
+  if (executionMode === "subset" && example.kind === "map") return renderMapVisual();
+  if (executionMode === "subset" && example.kind === "fold") return renderFoldVisual();
+
+  const runningLean = executionMode === "lean-loading";
+  const actualLean = executionMode === "lean" || executionMode === "lean-unavailable";
+  const expression = response?.expressionText || activeSource;
+  const result = runningLean
+    ? "Lean 4 is running this program…"
+    : actualLean
+      ? response?.error || response?.stdout || "Lean accepted the program without printed output."
+      : response?.done
+        ? response.expressionText || "Evaluation complete"
+        : response?.note || "Reduce once to follow the value.";
+  const operation = /List\.filter/.test(activeSource) ? "FILTER VALUES"
+    : /List\.fold/.test(activeSource) ? "FOLD VALUES"
+      : /List\.map|\.map\b/.test(activeSource) ? "MAP VALUES"
+        : /\bif\b/.test(activeSource) ? "FOLLOW A CONDITION"
+          : /\bfun\b/.test(activeSource) ? "FOLLOW A FUNCTION"
+            : "FOLLOW THE EXPRESSION";
+  const leftLabel = actualLean ? "PROGRAM" : "CURRENT EXPRESSION";
+  const rightLabel = actualLean ? "LEAN 4 RESULT" : response?.done ? "VALUE" : "REDUCTION NOTE";
+  return `<div class="eval-visual custom-value-view"><div class="eval-operation">YOUR CODE · ${operation}</div><div class="custom-value-flow"><div class="custom-value-side"><small>${leftLabel}</small><code>${escapeHtml(expression)}</code></div><span class="custom-value-arrow" aria-hidden="true">→</span><div class="custom-value-side custom-value-result"><small>${rightLabel}</small><code>${escapeHtml(result)}</code></div></div></div>`;
+}
+
 function renderVisual() {
-  if (["lean", "lean-loading", "lean-unavailable"].includes(executionMode)) {
+  if (customProgram) {
+    $("visualStage").innerHTML = renderCustomVisual();
+  } else if (["lean", "lean-loading", "lean-unavailable"].includes(executionMode)) {
     $("visualStage").innerHTML = renderLeanView();
   } else if (example.kind === "map") {
     $("visualStage").innerHTML = renderMapVisual();
   } else if (example.kind === "fold") {
     $("visualStage").innerHTML = renderFoldVisual();
+  } else if (example.kind === "graph") {
+    $("visualStage").innerHTML = renderGraphVisual();
   } else {
     const value = response?.expressionText || "?";
     $("visualStage").innerHTML = `<div class="eval-visual"><div class="eval-operation">Current value</div><div class="eval-scalar">${escapeHtml(value)}</div></div>`;
@@ -393,6 +481,35 @@ function moveSceneToState() {
   }
 }
 
+function syncLearningMeasure() {
+  const heading = document.querySelector(".page-heading");
+  const title = heading?.querySelector("h1");
+  if (!heading || !title) return;
+
+  const left = window.innerWidth <= 620 ? 14 : window.innerWidth <= 900 ? 22 : Math.min(30, Math.max(16, window.innerWidth * 0.02));
+  const available = Math.max(150, window.innerWidth - left * 2 - 16);
+  document.documentElement.style.setProperty("--lesson-left", `${left}px`);
+  if (document.body.classList.contains("adventure-running")) {
+    const adventureWidth = Math.min(590, available);
+    document.documentElement.style.setProperty("--lesson-width", `${adventureWidth}px`);
+    return;
+  }
+  title.style.removeProperty("font-size");
+
+  const measure = () => {
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    return [...range.getClientRects()].reduce((right, rect) => Math.max(right, rect.right), 0) - heading.getBoundingClientRect().left;
+  };
+  let inkWidth = measure();
+  if (inkWidth > available) {
+    const baseSize = Number.parseFloat(getComputedStyle(title).fontSize) || 40;
+    title.style.fontSize = `${Math.max(24, baseSize * available / inkWidth)}px`;
+    inkWidth = measure();
+  }
+  document.documentElement.style.setProperty("--lesson-width", `${Math.ceil(Math.min(available, inkWidth))}px`);
+}
+
 function runtimeTag() {
   if (executionMode === "lean") return "LEAN 4 · ACTUAL";
   if (executionMode === "lean-loading") return "LEAN 4 · LOADING";
@@ -401,25 +518,45 @@ function runtimeTag() {
   return engine ? "STEP SUBSET" : "LOADING";
 }
 
+function renderEvaluationTrace(currentExpression) {
+  const states = history.length ? [...history, response].filter(Boolean) : [response].filter(Boolean);
+  const entries = states.length ? states : [{ expressionText: currentExpression, stepCount: 0 }];
+  $("evaluationTrace").innerHTML = entries.map((state, index) => {
+    const isCurrent = index === entries.length - 1;
+    const text = isCurrent ? currentExpression : state.expressionText || activeSource;
+    const step = executionMode.startsWith("lean") ? "RUN" : String(state.stepCount || 0).padStart(2, "0");
+    let code = highlightExpression(text);
+    if (state.focusStart >= 0 && state.focusEnd > state.focusStart) {
+      const redex = activeSource.slice(state.focusStart, state.focusEnd);
+      const offset = text.indexOf(redex);
+      if (redex && offset >= 0) {
+        code = `${highlightExpression(text.slice(0, offset))}<span class="trace-redex">${highlightExpression(redex)}</span>${highlightExpression(text.slice(offset + redex.length))}`;
+      }
+    }
+    const detail = state.note ? `<small>${escapeHtml(state.note)}</small>` : "";
+    return `<div class="trace-line ${isCurrent ? "is-current" : "is-past"}"><span class="trace-step">${step}</span><div class="trace-content"><code>${code}</code>${detail}</div></div>`;
+  }).join("");
+  $("evaluationTrace").scrollTop = $("evaluationTrace").scrollHeight;
+}
+
 function render() {
   renderSamples();
+  const adventureModel = adventureModelForStep(adventureIslandIndex);
+  const displayedIsland = adventureActive ? adventureModel : example.id;
   $("worldScene").querySelectorAll("[data-island]").forEach((island) => {
-    island.classList.toggle("is-active-island", island.dataset.island === example.id);
+    island.classList.toggle("is-active-island", island.dataset.island === displayedIsland);
   });
-  $("islandName").textContent = examples.find((item) => item.id === example.id)?.place.toUpperCase() || "OPEN SKY";
+  $("islandName").textContent = adventureActive
+    ? `ISLE ${String(adventureIslandIndex + 1).padStart(2, "0")} · ${examples.find((item) => item.id === adventureModel)?.place.toUpperCase() || "OPEN SKY"}`
+    : examples.find((item) => item.id === example.id)?.place.toUpperCase() || "OPEN SKY";
   moveSceneToState();
   $("proofTitle").textContent = example.title;
   $("proofDescription").textContent = example.description;
+  syncLearningMeasure();
   $("fileName").textContent = example.file;
   $("parserStatus").textContent = runtimeTag();
   $("modeBadge").textContent = executionMode.startsWith("lean") ? "ACTUAL LEAN 4" : "TEACHING SUBSET";
-  $("stepCounter").textContent = executionMode === "lean" || executionMode === "lean-unavailable"
-    ? "Lean 4 run"
-    : `Reduction ${response?.stepCount || 0}`;
-  $("progressFill").style.width = response?.done ? "100%" : `${Math.min(88, 6 + (response?.stepCount || 0) * 7)}%`;
-  $("progressPercent").textContent = executionMode.startsWith("lean")
-    ? executionMode === "lean-loading" ? "Starting Lean 4" : executionMode === "lean-unavailable" ? "Lean unavailable" : "Actual Lean 4 result"
-    : response?.done ? "Normal form reached" : response?.stepCount ? "Stepping through expression" : "Ready to reduce";
+  $("goalLabel").textContent = adventureActive ? `ISLAND ${adventureIslandIndex + 1} · REDUCTION TRACE` : "REDUCTION TRACE";
   $("nextLabel").textContent = response?.done ? "Complete" : response?.stepCount ? "Next reduction" : "Reduce once";
   const subsetCanStep = executionMode === "subset" && engine && response && !response.done && !response.error;
   $("nextButton").disabled = !subsetCanStep;
@@ -436,7 +573,7 @@ function render() {
   const expression = response?.mode === "lean"
     ? (response.error ? "Lean 4 reported an error" : response.stdout || "Lean 4 accepted this program")
     : response?.expressionText || activeSource;
-  $("goalText").innerHTML = highlightExpression(expression);
+  renderEvaluationTrace(expression);
   $("goalState").textContent = response?.error ? "Error" : executionMode === "lean" ? "Lean 4" : response?.done ? "Complete" : response?.stepCount ? "Reducing" : "Ready";
   $("goalState").classList.toggle("error", Boolean(response?.error));
   $("goalState").classList.toggle("solved", Boolean(response?.done && !response?.error));
@@ -447,7 +584,8 @@ function render() {
   renderCode();
   renderVisual();
   worldExperience?.setState({
-    lessonId: examples.some((item) => item.id === example.id) ? example.id : "custom",
+    lessonId: adventureActive ? adventureModel : examples.some((item) => item.id === example.id) ? example.id : "custom",
+    adventureStep: adventureIslandIndex,
     stepCount: response?.stepCount || 0,
     activeIndex: response?.activeIndex ?? -1,
     inputItems: response?.inputItems || example.preview || [],
@@ -505,6 +643,25 @@ function playStepTone(frequency = 523, duration = 0.12) {
   }
 }
 
+function playGuideArrival() {
+  if (!stepSoundsEnabled || !toneContext) return;
+  if (toneContext.state === "suspended") toneContext.resume();
+  const now = toneContext.currentTime;
+  // A quiet, slightly delayed pair makes the guide's arrival audible over the departure cue.
+  for (const [frequency, delay, volume] of [[784, 0, 0.016], [1174, 0.075, 0.008]]) {
+    const oscillator = toneContext.createOscillator();
+    const gain = toneContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now + delay);
+    gain.gain.setValueAtTime(0.0001, now + delay);
+    gain.gain.exponentialRampToValueAtTime(volume, now + delay + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.42);
+    oscillator.connect(gain).connect(toneContext.destination);
+    oscillator.start(now + delay);
+    oscillator.stop(now + delay + 0.45);
+  }
+}
+
 function setToggleState(button, enabled, onLabel, offLabel, onAria, offAria) {
   button.setAttribute("aria-pressed", String(enabled));
   button.setAttribute("aria-label", enabled ? offAria : onAria);
@@ -534,7 +691,7 @@ $("musicToggle").addEventListener("click", async () => {
     ambientMusic.volume = 0;
     try {
       await ambientMusic.play();
-      fadeAmbientMusic(0.52);
+      fadeAmbientMusic(0.78);
       setToggleState($("musicToggle"), true, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
     } catch {
       setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
@@ -767,18 +924,59 @@ document.addEventListener("keydown", (event) => {
 });
 
 render();
-worldExperience = createWorldExperience({ canvas: $("worldThree"), labels: $("worldLabels") });
+window.addEventListener("resize", syncLearningMeasure, { passive: true });
+worldExperience = createWorldExperience({
+  canvas: $("worldThree"),
+  labels: $("worldLabels"),
+  onGuideArrive: playGuideArrival,
+  onSkyFacing: (facing) => {
+    document.body.classList.toggle("sky-facing", facing);
+    const skyNavigation = $("skyNavigation");
+    skyNavigation.inert = !facing;
+    skyNavigation.setAttribute("aria-hidden", String(!facing));
+  },
+  onIslandSelect: (id) => {
+    setMapOpen(false);
+    selectExample(id);
+  },
+});
 worldExperience?.setTheme(dayTheme);
 worldExperience?.setMotion(motionEnabled);
+worldExperience?.setAdventureMode(adventureActive);
 worldExperience?.setState({
-  lessonId: example.id, stepCount: 0, activeIndex: -1, inputItems: example.preview,
+  lessonId: adventureActive ? adventureModelForStep(adventureIslandIndex) : example.id, adventureStep: adventureIslandIndex, stepCount: 0, activeIndex: -1, inputItems: example.preview,
   outputItems: [], accumulatorText: "", expressionText: example.source, done: false, error: false, mode: "subset",
 });
 
 const mapToggle = $("mapToggle");
 const constellationMap = $("constellationMap");
+const skyNavigation = $("skyNavigation");
+const homeConstellations = $("homeConstellations");
+const adventureEntry = $("adventureEntry");
+const codeDrawer = $("codeDrawer");
+const codeDrawerToggle = $("codeDrawerToggle");
+function setCodeDrawerOpen(open) {
+  const isOpen = Boolean(open);
+  document.body.classList.toggle("code-drawer-open", isOpen);
+  codeDrawer.inert = !isOpen;
+  codeDrawerToggle.setAttribute("aria-expanded", String(isOpen));
+  codeDrawerToggle.setAttribute("aria-label", isOpen ? "Close code drawer" : "Open code drawer");
+}
+codeDrawerToggle.addEventListener("click", () => setCodeDrawerOpen(!document.body.classList.contains("code-drawer-open")));
+$("codeDrawerClose").addEventListener("click", () => setCodeDrawerOpen(false));
+function showMapView(view) {
+  homeConstellations.hidden = view !== "home";
+  adventureEntry.hidden = view !== "adventure";
+  $("homeRoute").classList.toggle("is-selected", view === "home");
+  $("adventureRoute").classList.toggle("is-selected", view === "adventure");
+  document.body.classList.toggle("adventure-setup", view === "adventure" && !adventureActive);
+}
 function setMapOpen(open) {
   const isOpen = Boolean(open);
+  if (isOpen) setCodeDrawerOpen(false);
+  if (isOpen) showMapView(adventureActive ? "adventure" : "home");
+  else if (!adventureActive) document.body.classList.remove("adventure-setup");
+  document.body.classList.toggle("world-map-open", isOpen);
   constellationMap.hidden = !isOpen;
   mapToggle.setAttribute("aria-expanded", String(isOpen));
   mapToggle.setAttribute("aria-label", isOpen ? "Close constellation map" : "Open constellation map");
@@ -787,8 +985,21 @@ function setMapOpen(open) {
 }
 mapToggle.addEventListener("click", () => setMapOpen(constellationMap.hidden));
 $("mapClose").addEventListener("click", () => setMapOpen(false));
+$("homeRoute").addEventListener("click", () => {
+  if (adventureActive) { leaveAdventure(); selectExample("map"); }
+  showMapView("home");
+});
+$("adventureRoute").addEventListener("click", () => showMapView("adventure"));
+adventureEntry.addEventListener("submit", (event) => {
+  event.preventDefault();
+  $("sourceEditor").value = $("adventureCode").value;
+  adventureRequested = true;
+  setMapOpen(false);
+  runProgram();
+});
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !constellationMap.hidden) setMapOpen(false);
+  if (event.key === "Escape" && document.body.classList.contains("code-drawer-open")) setCodeDrawerOpen(false);
 });
 document.querySelectorAll(".map-star").forEach((star) => {
   star.addEventListener("click", () => {
@@ -799,11 +1010,30 @@ document.querySelectorAll(".map-star").forEach((star) => {
   });
 });
 
+$("skyHome").addEventListener("click", () => {
+  worldExperience?.faceForward();
+  setMapOpen(false);
+  if (adventureActive) leaveAdventure();
+  selectExample("map");
+});
+$("skyAdventure").addEventListener("click", () => {
+  worldExperience?.faceForward();
+  setMapOpen(true);
+  showMapView("adventure");
+});
+skyNavigation.querySelectorAll("[data-sky-island]").forEach((node) => {
+  node.addEventListener("click", () => {
+    worldExperience?.faceForward();
+    setMapOpen(false);
+    selectExample(node.dataset.skyIsland);
+  });
+});
+
 let pointerDrag = null;
 const dragBlockSelector = "button,a,input,textarea,select,summary,[contenteditable='true'],.constellation-map";
 window.addEventListener("pointerdown", (event) => {
   if (!event.isPrimary || event.button !== 0 || event.target.closest(dragBlockSelector)) return;
-  pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY };
   document.body.classList.add("is-looking");
   event.preventDefault();
 }, { passive: false });
@@ -812,12 +1042,16 @@ window.addEventListener("pointermove", (event) => {
     const dx = event.clientX - pointerDrag.x, dy = event.clientY - pointerDrag.y;
     worldExperience?.rotateView(dx, dy);
     pointerDrag.x = event.clientX; pointerDrag.y = event.clientY;
+  } else {
+    document.body.classList.toggle("isle-hover", worldExperience?.hoverIsland(event.clientX, event.clientY) ?? false);
   }
 }, { passive: true });
 const stopLooking = (event) => {
   if (pointerDrag?.id !== event.pointerId) return;
+  const clicked = Math.hypot(event.clientX - pointerDrag.startX, event.clientY - pointerDrag.startY) < 8;
   pointerDrag = null;
   document.body.classList.remove("is-looking");
+  if (clicked) worldExperience?.pickIsland(event.clientX, event.clientY);
 };
 window.addEventListener("pointerup", stopLooking, { passive: true });
 window.addEventListener("pointercancel", stopLooking, { passive: true });

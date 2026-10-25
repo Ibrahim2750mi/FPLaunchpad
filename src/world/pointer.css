@@ -1,15 +1,21 @@
 .sky-cursor,.cursor-trail{position:fixed;inset:0;z-index:100;pointer-events:none}
 .sky-cursor{opacity:0;transition:opacity .15s}
 .sky-cursor.is-visible{opacity:1}.sky-cursor.is-away{opacity:0}
-.cursor-aura,.cursor-star{position:absolute;left:var(--pointer-x,0);top:var(--pointer-y,0);transform:translate(-50%,-50%)}
-.cursor-aura{width:25px;height:25px;border:1px solid rgba(255,233,190,.22);border-radius:50%;box-shadow:0 0 17px rgba(255,224,165,.2);transition:width .25s,height .25s,border-color .25s}
-.cursor-star{color:#fff1c4;font-size:13px;line-height:1;text-shadow:0 0 5px #fff4cf,0 0 16px rgba(255,220,147,.95);transition:scale .22s,color .22s}
-.is-looking .cursor-aura{width:36px;height:36px;border-color:rgba(255,228,173,.58)}
-.is-looking .cursor-star{scale:.72;color:#ffe2a0}
+.cursor-aura,.cursor-hex{position:absolute;left:var(--pointer-x,0);top:var(--pointer-y,0);transform:translate(-50%,-50%)}
+.cursor-aura{width:38px;height:38px;border:1px solid rgba(255,233,190,.34);border-radius:50%;box-shadow:0 0 24px rgba(255,224,165,.3),inset 0 0 15px rgba(255,232,195,.08);transition:width .25s,height .25s,border-color .25s}
+.cursor-hex{color:#fff1c4;font-size:26px;line-height:1;text-shadow:0 0 7px #fff4cf,0 0 22px rgba(255,220,147,.98);transition:scale .22s,color .22s}
+.is-looking .cursor-aura{width:50px;height:50px;border-color:rgba(255,228,173,.72)}
+.is-looking .cursor-hex{scale:.72;color:#ffe2a0}
 .cursor-trail{z-index:99}
-.cursor-mote{position:absolute;left:0;top:0;width:var(--mote-size);height:var(--mote-size);border-radius:50%;background:#ffe8b4;box-shadow:0 0 8px 2px rgba(255,223,163,.55);opacity:0;pointer-events:none}
-.cursor-mote.is-visible{animation:cursorMoteFade .8s ease-out forwards}
-@keyframes cursorMoteFade{0%{opacity:.86;translate:0 0;scale:1}100%{opacity:0;translate:calc(var(--mote-drift)*9px) -15px;scale:.1}}
+.cursor-mote{position:absolute;left:0;top:0;width:var(--mote-size);height:var(--mote-size);border-radius:50%;background:var(--mote-hue,#fff1cc);box-shadow:0 0 11px 3px color-mix(in srgb,var(--mote-hue,#fff1cc) 68%,transparent);opacity:0;pointer-events:none}
+.cursor-mote--diamond{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.cursor-mote--spark{border-radius:0;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.cursor-mote.is-visible{animation:cursorMoteFade var(--mote-life,1s) ease-out forwards}
+.cursor-orbit{position:absolute;left:var(--pointer-x,0);top:var(--pointer-y,0);width:44px;height:44px;transform:translate(-50%,-50%);border:1px dashed rgba(220,229,255,.27);border-radius:50%;animation:cursorOrbit 12s linear infinite}
+.cursor-orbit i{position:absolute;top:2px;left:50%;width:4px;height:4px;border-radius:50%;background:#c9efff;box-shadow:0 0 9px 3px rgba(201,239,255,.5)}
+.cursor-orbit i+i{top:auto;bottom:3px;background:#ffe5ad;box-shadow:0 0 9px 3px rgba(255,229,173,.5)}
+@keyframes cursorMoteFade{0%{opacity:.98;translate:0 0;scale:1}100%{opacity:0;translate:var(--mote-drift) var(--mote-rise);scale:.08}}
+@keyframes cursorOrbit{to{rotate:360deg}}
 body.sky-pointer-ready,body.sky-pointer-ready *{cursor:none!important}
 body.sky-pointer-ready textarea,body.sky-pointer-ready input{cursor:text!important}
 body.is-looking{user-select:none}

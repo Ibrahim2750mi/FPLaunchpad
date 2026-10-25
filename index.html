@@ -7,11 +7,24 @@
     <title>Lean Interpreter — Syntax 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="src/world/pointer.css" />
   </head>
   <body>
+    <section class="arrival-screen" id="arrivalScreen" aria-labelledby="arrivalHeading" aria-modal="true" role="dialog">
+      <canvas class="arrival-effects" id="arrivalEffects" aria-hidden="true"></canvas>
+      <div class="arrival-copy" id="arrivalCopy">
+        <span class="arrival-mark" aria-hidden="true">⬡</span>
+        <p class="arrival-eyebrow" id="arrivalEyebrow">BEFORE THE FLIGHT · 01 / 03</p>
+        <h1 id="arrivalHeading">We built our own Lean interpreter.</h1>
+        <p class="arrival-description" id="arrivalDescription">It follows supported Lean expressions and applies one evaluation rule at a time. For code beyond this teaching subset, Lean 4 can run the program.</p>
+        <div class="arrival-actions">
+          <button type="button" class="arrival-skip" id="arrivalSkip">Skip the guide</button>
+          <button type="button" class="arrival-next" id="arrivalNext">Follow the light <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </section>
     <div class="world-scene" id="worldScene" aria-hidden="true">
       <div class="world-camera" id="worldCamera">
       <div class="world-sky"></div>
@@ -41,33 +54,61 @@
       <canvas class="world-three" id="worldThree"></canvas>
       <canvas class="world-labels" id="worldLabels"></canvas>
     </div>
-    <div class="app-shell">
+    <div class="app-shell" id="appShell" inert>
       <header class="topbar">
         <a class="brand" href="#" aria-label="Lean Stepper home">
           <span class="brand-mark">✦</span>
           <span>lean<span class="brand-light">stepper</span></span>
         </a>
         <div class="project-label"><span class="crumb-muted">THE FLOATING ARCHIVE</span><span class="crumb-slash">·</span><span>A study in motion</span></div>
+        <span class="sky-look-hint" aria-hidden="true">DRAG UP TO WAYFIND</span>
         <div class="top-actions">
           <span class="keyboard-hint"><kbd>←</kbd><kbd>→</kbd> journey</span>
           <button class="world-toggle" id="musicToggle" type="button" aria-pressed="false" aria-label="Turn ambient music on"><span class="toggle-icon">♫</span><span class="toggle-label">Music off</span></button>
           <button class="world-toggle sound-toggle" id="soundToggle" type="button" aria-pressed="true" aria-label="Turn step sounds off"><span class="toggle-icon">◖</span><span class="toggle-label">Sound on</span></button>
           <button class="world-toggle theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Switch to daylight"><span class="toggle-icon">☼</span><span class="toggle-label">Starlight</span></button>
           <button class="world-toggle motion-toggle" id="motionToggle" type="button" aria-pressed="true" aria-label="Turn ambient motion off"><span class="toggle-icon">✧</span><span class="toggle-label">Motion on</span></button>
-          <button class="world-toggle map-toggle" id="mapToggle" type="button" aria-label="Open constellation map" aria-expanded="false" aria-controls="constellationMap"><span class="toggle-icon">⌖</span><span class="toggle-label">Sky map</span></button>
+          <button class="world-toggle map-toggle" id="mapToggle" type="button" aria-label="Open constellation map" aria-expanded="false" aria-controls="constellationMap" disabled aria-hidden="true" tabindex="-1"><span class="toggle-icon">⌖</span><span class="toggle-label">Sky map</span></button>
+          <button class="world-toggle code-drawer-toggle" id="codeDrawerToggle" type="button" aria-expanded="false" aria-controls="codeDrawer"><span class="toggle-icon">⌘</span><span class="toggle-label">Code</span></button>
         </div>
       </header>
 
+      <nav class="sky-navigation" id="skyNavigation" aria-label="Constellation navigation" aria-hidden="true" inert>
+        <div class="sky-navigation-heading"><span>THE FLOATING ARCHIVE</span><span>LOOK UP TO WAYFIND</span></div>
+        <svg class="sky-navigation-lines" viewBox="0 0 720 190" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M78 132 188 62 300 127 414 54 535 121 642 48 M188 62 235 159 414 54 485 160 535 121" />
+        </svg>
+        <button type="button" class="sky-node sky-node-home" id="skyHome"><i>⬡</i><span>Home</span></button>
+        <button type="button" class="sky-node sky-node-adventure" id="skyAdventure"><i>⬡</i><span>Adventure</span></button>
+        <button type="button" class="sky-node sky-node-verdant" data-sky-island="map"><i>⬡</i><span>Verdant</span></button>
+        <button type="button" class="sky-node sky-node-ember" data-sky-island="fold"><i>⬡</i><span>Ember</span></button>
+        <button type="button" class="sky-node sky-node-frost" data-sky-island="let"><i>⬡</i><span>Frost</span></button>
+        <button type="button" class="sky-node sky-node-cloud" data-sky-island="function"><i>⬡</i><span>Cloud</span></button>
+      </nav>
+
       <aside class="constellation-map" id="constellationMap" aria-label="Sky map" hidden>
-        <div class="map-heading"><span>ISLES IN THE STARS</span><button type="button" id="mapClose" aria-label="Close sky map">×</button></div>
-        <div class="star-chart" aria-label="Choose an island">
-          <svg viewBox="0 0 280 150" preserveAspectRatio="none" aria-hidden="true"><path d="M38 99 112 48 178 87 239 34 38 99"/><path d="m112 48 18 58 48-19m61-53-61 53"/></svg>
-          <button type="button" class="map-star star-verdant" data-island="map"><i></i><span>Verdant</span></button>
-          <button type="button" class="map-star star-ember" data-island="fold"><i></i><span>Ember</span></button>
-          <button type="button" class="map-star star-frost" data-island="let"><i></i><span>Frost</span></button>
-          <button type="button" class="map-star star-cloud" data-island="function"><i></i><span>Cloud</span></button>
-        </div>
-        <p>DRAG THE SKY TO LOOK AROUND</p>
+        <div class="map-heading"><span>CHOOSE A WAYFINDING</span><button type="button" id="mapClose" aria-label="Close sky map">×</button></div>
+        <nav class="map-routes" aria-label="Choose home or adventure">
+          <svg viewBox="0 0 280 62" preserveAspectRatio="none" aria-hidden="true"><path d="M42 31 C92 31 86 12 138 12 S190 31 238 31 M42 31 C92 31 86 50 138 50 S190 31 238 31"/></svg>
+          <button type="button" class="map-route" id="homeRoute"><i>✦</i><span>Home<small>THE LEARNING ISLES</small></span></button>
+          <button type="button" class="map-route" id="adventureRoute"><i>✧</i><span>Adventure<small>BRING YOUR OWN CODE</small></span></button>
+        </nav>
+        <section class="home-constellations" id="homeConstellations" hidden aria-label="Home learning islands">
+          <div class="map-subheading">ISLANDS IN VIEW <span>SELECT A GLOWING ISLE</span></div>
+          <div class="star-chart map-accessible-list" aria-label="Choose an island">
+            <svg viewBox="0 0 280 150" preserveAspectRatio="none" aria-hidden="true"><path d="M38 99 112 48 178 87 239 34 38 99"/><path d="m112 48 18 58 48-19m61-53-61 53"/></svg>
+            <button type="button" class="map-star star-verdant" data-island="map"><i></i><span>Verdant</span></button>
+            <button type="button" class="map-star star-ember" data-island="fold"><i></i><span>Ember</span></button>
+            <button type="button" class="map-star star-frost" data-island="let"><i></i><span>Frost</span></button>
+            <button type="button" class="map-star star-cloud" data-island="function"><i></i><span>Cloud</span></button>
+          </div>
+          <p>SELECT AN ISLE IN THE SKY · DRAG TO LOOK AROUND</p>
+        </section>
+        <form class="adventure-entry" id="adventureEntry" hidden>
+          <label for="adventureCode">A line of Lean, a path through the sky.</label>
+          <textarea id="adventureCode" rows="4" spellcheck="false">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</textarea>
+          <button type="submit" class="portal-button"><span>Step through the portal</span><span aria-hidden="true">↗</span></button>
+        </form>
       </aside>
 
       <div class="workspace">
@@ -87,41 +128,37 @@
             <span class="subset-badge" id="modeBadge">TEACHING SUBSET</span>
           </div>
 
-          <section class="progress-section" aria-label="Evaluation progress">
-            <div class="progress-meta"><span><strong id="stepCounter">Reduction 0</strong></span><span class="progress-percent" id="progressPercent">Ready to begin</span></div>
-            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-          </section>
-
-          <div class="work-grid">
-            <section class="code-panel panel">
-              <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">✧</span><span id="fileName">map_values.lean</span><span class="file-pill">SOURCE</span></div><span class="file-pill" id="parserStatus">STEP SUBSET</span></div>
-              <div class="code-body" id="codeBody" aria-label="Interpreter source code"></div>
-              <div class="code-status"><span class="status-check">✓</span><span id="codeStatus">Proof ready to run</span><span class="code-status-right">Lean-inspired subset</span></div>
-            </section>
-
+          <div class="learning-column">
             <section class="visual-panel panel">
-              <div class="panel-toolbar"><div class="panel-title"><span class="visual-glyph">✦</span><span>The step, in the world</span></div><span class="live-badge"><i></i> IN FOCUS</span></div>
+              <div class="panel-toolbar"><div class="panel-title"><span class="visual-glyph">✦</span><span>THE STEP IN THE WORLD</span></div><span class="live-badge"><i></i> IN FOCUS</span></div>
               <div class="visual-stage" id="visualStage"></div>
               <div class="visual-caption"><span id="visualCaption">The starting state</span><span class="step-dots" id="stepDots"></span></div>
             </section>
+            <section class="goal-card panel" aria-live="polite"><div class="goal-icon">λ</div><div class="goal-copy"><span class="goal-label" id="goalLabel">REDUCTION TRACE</span><div class="evaluation-trace" id="evaluationTrace"><div class="trace-line"><span class="trace-step">00</span><code id="goalText">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</code></div></div></div><span class="goal-state" id="goalState">Ready</span></section>
           </div>
-
-          <details class="editor-card panel" aria-label="Custom Lean program">
-            <summary class="panel-toolbar"><span class="panel-title"><span class="file-glyph">✎</span><span>Your field notes</span></span><span class="editor-hint">Edit or run custom Lean</span><span class="editor-chevron">⌄</span></summary>
-            <textarea id="sourceEditor" spellcheck="false" aria-label="Lean source editor"></textarea>
-            <div class="editor-footer"><span id="runtimeMessage" role="status" aria-live="polite">Subset ready · custom Lean falls back to Lean 4</span><button class="next-button run-button" id="runButton"><span>Run program</span><span class="next-arrow">→</span></button></div>
-          </details>
-
-          <section class="goal-card panel" aria-live="polite"><div class="goal-icon">λ</div><div class="goal-copy"><span class="goal-label">THE EXPRESSION, SO FAR</span><p id="goalText">#eval List.map (fun x =&gt; x * 2) [1, 2, 3]</p></div><span class="goal-state" id="goalState">Ready</span></section>
 
           <div class="player-controls"><div class="control-hint"><span class="hint-icon">⌘</span><span><kbd>←</kbd> <kbd>→</kbd> to step through</span></div><div class="control-buttons"><button class="previous-button" id="previousButton" disabled><span>←</span> Previous</button><button class="reset-button" id="resetButton"><span>↺</span> Reset</button><button class="next-button" id="nextButton"><span id="nextLabel">Reduce once</span><span class="next-arrow">→</span></button></div></div>
         </main>
       </div>
+      <aside class="code-drawer" id="codeDrawer" aria-label="Code and field notes" inert>
+        <div class="code-drawer-heading"><div><span class="eyebrow">FIELD NOTES</span><h2>Source</h2></div><button type="button" id="codeDrawerClose" aria-label="Close code drawer">×</button></div>
+        <section class="code-panel panel">
+          <div class="panel-toolbar"><div class="panel-title"><span class="file-glyph">✧</span><span id="fileName">map_values.lean</span><span class="file-pill">SOURCE</span></div><span class="file-pill" id="parserStatus">STEP SUBSET</span></div>
+          <div class="code-body" id="codeBody" aria-label="Interpreter source code"></div>
+          <div class="code-status"><span class="status-check">✓</span><span id="codeStatus">Proof ready to run</span><span class="code-status-right">Lean-inspired subset</span></div>
+        </section>
+        <details class="editor-card panel" aria-label="Custom Lean program">
+          <summary class="panel-toolbar"><span class="panel-title"><span class="file-glyph">✎</span><span>Your field notes</span></span><span class="editor-hint">Edit or run custom Lean</span><span class="editor-chevron">⌄</span></summary>
+          <textarea id="sourceEditor" spellcheck="false" aria-label="Lean source editor"></textarea>
+          <div class="editor-footer"><span id="runtimeMessage" role="status" aria-live="polite">Subset ready · custom Lean falls back to Lean 4</span><button class="next-button run-button" id="runButton"><span>Run program</span><span class="next-arrow">→</span></button></div>
+        </details>
+      </aside>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
-    <div class="sky-cursor" id="skyCursor" aria-hidden="true"><span class="cursor-aura"></span><span class="cursor-star">✦</span></div>
+    <div class="sky-cursor" id="skyCursor" aria-hidden="true"><span class="cursor-aura"></span><span class="cursor-orbit"><i></i><i></i></span><span class="cursor-hex">⬡</span></div>
     <div class="cursor-trail" id="cursorTrail" aria-hidden="true"></div>
     <audio id="ambientMusic" src="assets/audio/slow-stride-loop.ogg" loop preload="none"></audio>
+    <script type="module" src="src/world/arrival.js"></script>
     <script type="module" src="app.js"></script>
     <script type="module" src="src/world/pointer.js"></script>
   </body>

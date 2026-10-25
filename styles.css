@@ -215,6 +215,26 @@ body[data-theme="day"] .editor-card{background:rgba(42,61,101,.85)}
   .world-far-islands img:nth-child(1){width:39%;right:-8%;top:15%}.world-far-islands img:nth-child(2){width:30%;left:-9%;top:28%}.world-far-islands img:nth-child(3){width:29%;right:15%;top:37%}
   .world-rays img{width:95%;opacity:.66}.world-particles{opacity:.64}
 }
+
+/* The portal transition introduces the interpreter before opening the world. */
+.arrival-screen{position:fixed;z-index:140;inset:0;display:grid;place-items:center;overflow:hidden;padding:24px;background:radial-gradient(ellipse at 50% 45%,rgba(53,45,104,.94),rgba(22,18,59,.98) 58%,#090b25 100%);color:#fff8e8;opacity:1;transition:opacity .9s ease,filter 1.2s ease,transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.arrival-screen[hidden]{display:none}
+.arrival-screen.is-entering{opacity:0;filter:brightness(1.8) blur(5px);transform:scale(1.08);pointer-events:none}
+.arrival-effects{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.arrival-copy{position:relative;z-index:1;display:grid;justify-items:center;gap:18px;width:min(760px,92vw);text-align:center;transition:opacity .28s ease,transform .35s ease}
+.arrival-copy.is-changing{opacity:0;transform:translateY(12px) scale(.985)}
+.arrival-mark{display:grid;place-items:center;width:76px;height:76px;border:1px solid rgba(255,235,193,.5);border-radius:50%;color:#fff0c6;font-size:35px;text-shadow:0 0 26px rgba(255,222,153,.9);box-shadow:0 0 45px rgba(231,205,255,.16),inset 0 0 30px rgba(255,255,255,.08);animation:arrivalFloat 4s ease-in-out infinite}
+.arrival-eyebrow{margin:0;color:#ffe9ba;font:800 11px var(--mono);letter-spacing:1.8px;text-shadow:0 2px 12px #080718}
+.arrival-copy h1{max-width:14ch;margin:0;color:#fffaf0;font:800 clamp(38px,7vw,78px)/1.02 'Oxanium',system-ui,sans-serif;letter-spacing:.005em;text-shadow:0 3px 28px rgba(8,6,28,.7)}
+.arrival-description{max-width:52ch;margin:0;color:rgba(255,249,235,.94);font-size:clamp(16px,2vw,20px);font-weight:600;line-height:1.65;text-shadow:0 2px 14px #080718}
+.arrival-actions{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:9px}
+.arrival-next{display:flex;align-items:center;gap:20px;min-height:50px;padding:0 23px;border:1px solid #ffdf9e;border-radius:999px;background:linear-gradient(125deg,#fff1c9,#f0ce88);color:#261d43;font-weight:800;box-shadow:0 8px 35px rgba(255,215,152,.22);transition:transform .2s,box-shadow .2s}
+.arrival-next:hover{transform:translateY(-2px);box-shadow:0 12px 42px rgba(255,215,152,.38)}
+.arrival-next span{font-size:18px}
+.arrival-skip{padding:12px 5px;border:0;background:transparent;color:rgba(255,246,224,.72);font-size:13px;font-weight:700;text-decoration:underline;text-decoration-color:rgba(255,246,224,.34);text-underline-offset:4px}
+@keyframes arrivalFloat{50%{transform:translateY(-7px) rotate(5deg);box-shadow:0 0 58px rgba(231,205,255,.24),inset 0 0 34px rgba(255,255,255,.1)}}
+@media(max-width:620px){.arrival-copy{gap:14px}.arrival-copy h1{font-size:clamp(34px,10vw,53px)}.arrival-description{font-size:15px}.arrival-actions{gap:15px;flex-wrap:wrap}.arrival-mark{width:62px;height:62px;font-size:29px}}
+@media(prefers-reduced-motion:reduce){.arrival-screen,.arrival-copy,.arrival-mark,.arrival-next{transition:none!important;animation:none!important}}
 @media(prefers-reduced-motion:reduce){body[data-motion="off"] .world-bob,body[data-motion="off"] .world-clouds-back img,body[data-motion="off"] .world-clouds-front img{animation:none!important}body[data-motion="off"] .sample-item,body[data-motion="off"] .world-toggle{transition:none!important}}
 
 /* Let the islands become the interface instead of sitting behind dashboard cards. */
@@ -619,3 +639,426 @@ body[data-theme="day"] .goal-card.panel,body[data-theme="day"] .code-panel,body[
 .constellation-map>p{margin:0;color:rgba(236,225,249,.72);font:7px var(--mono);letter-spacing:1.2px;text-align:center}
 @keyframes mapArrive{from{opacity:0;translate:0 -6px}to{opacity:1;translate:0 0}}
 @media(max-width:620px){.map-toggle .toggle-label{display:none}.constellation-map{top:54px;right:8px;width:min(288px,calc(100vw - 16px));padding:11px 12px 9px}.star-chart{height:132px}}
+
+/* Keep the navigation and evaluation readable over the open 3D landscape. */
+.map-toggle{display:inline-flex!important;align-items:center;gap:5px;padding:5px 9px!important;border-bottom:1px solid rgba(255,228,173,.58)!important;color:#fff0cb!important;text-shadow:0 1px 10px #100c30}
+.map-toggle .toggle-label{display:inline!important;font:9px var(--mono);letter-spacing:.7px}
+.map-toggle .toggle-icon{color:#ffe4a7;font-size:15px;text-shadow:0 0 12px rgba(255,228,173,.8)}
+.map-toggle:hover,.map-toggle.is-active{color:#fff!important;border-color:#fff0c8!important}
+.code-panel .code-body{height:126px;padding-top:4px;overflow-x:hidden;overflow-y:auto;scrollbar-width:none}
+.code-panel .code-body::-webkit-scrollbar{display:none}
+.code-panel .line-content{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:620px){
+ .map-toggle{gap:3px;padding:3px 5px!important}
+ .map-toggle .toggle-label{display:inline!important;font-size:7px;letter-spacing:.35px}
+ .map-toggle .toggle-icon{font-size:13px}
+ .code-panel.panel{height:151px}
+ .code-panel .code-body{height:73px;padding-top:2px}
+ .code-panel .code-status{height:23px}
+}
+
+/* The map is a branching star path rather than a floating selection card. */
+.constellation-map{width:min(360px,calc(100vw - 28px));padding:15px 17px 13px;border-left:1px solid rgba(255,232,190,.72);background:linear-gradient(150deg,rgba(20,16,48,.96),rgba(17,16,44,.9));}
+.map-routes{position:relative;display:grid;gap:1px;margin:14px 0 7px;padding:0 5px}
+.map-routes svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.map-routes svg path{fill:none;stroke:rgba(219,207,255,.39);stroke-width:1;stroke-dasharray:2 5}
+.map-route{position:relative;z-index:1;display:flex;align-items:center;gap:12px;min-height:50px;padding:4px 8px;border:0;background:transparent;color:#fff4df;text-align:left;text-shadow:0 2px 10px #0c0929;transition:color .2s,transform .25s}
+.map-route:hover,.map-route.is-selected{color:#ffe5ab;transform:translateX(3px)}
+.map-route>i{width:24px;text-align:center;color:#ffedbf;font:20px 'Cormorant Garamond',Georgia,serif;text-shadow:0 0 15px rgba(255,226,162,.92)}
+.map-route>span{display:grid;gap:3px;font:600 15px 'Cormorant Garamond',Georgia,serif;letter-spacing:.3px}
+.map-route small{color:rgba(236,225,249,.7);font:7px var(--mono);letter-spacing:1px}
+.map-subheading{display:flex;justify-content:space-between;color:#f2e4c8;font:8px var(--mono);letter-spacing:1.1px}
+.map-subheading span{color:#c7badc;font-size:7px}
+.home-constellations[hidden],.adventure-entry[hidden]{display:none}
+.home-constellations .star-chart{height:142px;margin-top:3px}
+.home-constellations>p{margin:0;color:rgba(236,225,249,.72);font:7px var(--mono);letter-spacing:1.2px;text-align:center}
+.adventure-entry{display:grid;gap:10px;margin:11px 5px 3px}
+.adventure-entry label{color:#f6ead6;font:500 13px 'Cormorant Garamond',Georgia,serif;letter-spacing:.2px}
+.adventure-entry textarea{width:100%;resize:vertical;min-height:96px;padding:9px 10px;border:1px solid rgba(237,225,255,.24);border-radius:3px;outline:none;background:rgba(6,7,25,.56);color:#fff8e9;font:10px/1.65 var(--mono);tab-size:2}
+.adventure-entry textarea:focus{border-color:rgba(255,225,166,.72);box-shadow:0 0 18px rgba(217,195,255,.13)}
+.portal-button{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;border:0;border-bottom:1px solid rgba(255,229,177,.63);background:transparent;color:#ffe9bb;font:500 12px 'Cormorant Garamond',Georgia,serif;letter-spacing:.4px;text-align:left}
+.portal-button:hover{color:#fff8e9;border-color:#fff3d6}
+.map-toggle{position:relative}
+.map-toggle::after{content:"";position:absolute;inset:-5px -8px;border:1px solid rgba(255,231,186,.24);border-radius:50%;pointer-events:none;animation:mapBeacon 3s ease-out infinite}
+@keyframes mapBeacon{0%{opacity:.65;scale:.82}80%,100%{opacity:0;scale:1.55}}
+
+/* The lower-left trace shows each expression state in order. */
+.goal-card.panel{position:fixed;z-index:7;left:clamp(20px,4vw,60px);bottom:81px;width:min(500px,48vw);min-height:0;margin:0;padding:7px 0;align-items:flex-start;gap:12px;overflow:visible;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;isolation:isolate}
+.goal-card.panel::before{content:"";position:absolute;z-index:-1;inset:-25px -52px;background:radial-gradient(ellipse at 40% 60%,rgba(16,13,44,.86),rgba(16,13,44,.55) 55%,rgba(16,13,44,.14) 82%,transparent 100%);pointer-events:none}
+.goal-card .goal-icon{margin-top:2px}
+.goal-card .goal-copy{min-width:0;flex:1}
+.goal-card .goal-label{display:block;margin-bottom:5px;color:#ffedc9;font:8px var(--mono);letter-spacing:1.2px;text-shadow:0 2px 9px #08061f}
+.evaluation-trace{display:grid;gap:4px;max-height:clamp(56px,13vh,115px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,232,190,.25) transparent}
+.trace-line{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:start;gap:7px;color:#fff9ec;text-shadow:0 2px 8px #09061f}
+.trace-content{display:grid;gap:1px;min-width:0}
+.trace-step{padding-top:1px;color:#ffe1a4;font:8px var(--mono);opacity:.86}
+.trace-line code{color:#fffaf0;font:9px/1.5 var(--mono);overflow-wrap:anywhere;white-space:pre-wrap}
+.trace-line.is-past code{color:rgba(246,239,255,.76)}
+.trace-line.is-current code{color:#fffdf6}
+.trace-line.is-current .trace-step{color:#fff0c7;text-shadow:0 0 10px rgba(255,222,158,.62)}
+.trace-content small{color:rgba(242,230,211,.72);font:7px/1.35 var(--mono);text-shadow:0 2px 7px #09061f}
+.trace-redex{color:#ffe9af;text-decoration:underline;text-decoration-color:rgba(255,225,166,.58);text-underline-offset:2px;text-shadow:0 0 9px rgba(255,222,158,.35)}
+.goal-card .goal-state{position:absolute;top:7px;right:0;margin:0;padding:0;border:0;background:transparent!important;color:#fff1d3;font-size:8px;text-shadow:0 1px 8px #09061f}
+
+/* Adventure mode becomes a quiet forest isle and keeps the working controls. */
+body.adventure-setup .workspace{opacity:.28;filter:blur(2px);pointer-events:none;transition:opacity .4s,filter .4s}
+body.adventure-running .world-scene{background:radial-gradient(ellipse at 50% 48%,#35305e 0,#1c1944 52%,#101027 100%)}
+body.adventure-running .world-3d-ready .world-layer{display:none!important}
+body.adventure-running .sidebar,body.adventure-running .page-heading,body.adventure-running .editor-card,body.adventure-running .visual-panel .panel-toolbar,body.adventure-running .visual-caption{display:none!important}
+body.adventure-running .visual-stage .eval-visual{display:none!important}
+body.adventure-running .main-content{padding-top:12px}
+body.adventure-running .work-grid{margin:0;height:calc(100vh - 22px)}
+body.adventure-running .code-panel{top:30px;width:min(330px,38vw);height:190px}
+body.adventure-running .code-body{height:125px}
+body.adventure-running .goal-card{bottom:88px}
+body.adventure-running .player-controls{right:clamp(16px,3vw,42px);bottom:26px}
+body.adventure-running .previous-button,body.adventure-running .reset-button{color:#fff5e5}
+body.adventure-running .next-button{background:linear-gradient(110deg,#f1d493,#fff0c2);color:#28203b}
+body.portal-flight .world-scene::before{content:"";position:absolute;z-index:6;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 0 5%,rgba(246,223,177,.9) 5.2%,rgba(222,208,255,.42) 6%,transparent 17%),radial-gradient(ellipse at center,rgba(10,8,31,.96),transparent 74%);animation:portalPass 2s cubic-bezier(.2,.75,.25,1) both}
+@keyframes portalPass{0%{opacity:0;scale:.25}18%{opacity:1;scale:.55}70%{opacity:.9;scale:2.4}100%{opacity:0;scale:5}}
+@media(max-width:620px){
+ .constellation-map{top:52px;right:7px;width:min(318px,calc(100vw - 14px));padding:12px 13px 10px}
+ .map-route{min-height:44px}.home-constellations .star-chart{height:126px}
+ .goal-card.panel{left:12px;right:12px;bottom:101px;width:auto;padding:4px 4px;gap:6px}
+ .goal-card .goal-icon{width:18px;height:18px;font-size:12px}
+ .goal-card .goal-label{font-size:8px;margin-bottom:3px}
+ .evaluation-trace{max-height:80px;gap:3px}
+ .trace-line{grid-template-columns:20px minmax(0,1fr);gap:5px}
+ .trace-step{font-size:8px}.trace-line code{font-size:9px;line-height:1.4}
+ .trace-content small{font-size:8px}
+ .goal-card .goal-state{top:4px;right:4px;font-size:7px}
+ body.adventure-running .main-content{padding:6px 9px 8px}
+ body.adventure-running .work-grid{height:calc(100vh - 64px)}
+ body.adventure-running .code-panel{top:14px;width:min(270px,78vw);height:142px}
+ body.adventure-running .code-body{height:78px}
+ body.adventure-running .goal-card{bottom:91px}
+ body.adventure-running .player-controls{right:8px;bottom:12px}
+}
+
+/* In map mode the islands themselves are the selector. */
+body.world-map-open .sidebar,
+body.world-map-open .page-heading,
+body.world-map-open .code-panel,
+body.world-map-open .visual-panel,
+body.world-map-open .goal-card,
+body.world-map-open .editor-card,
+body.world-map-open .player-controls{visibility:hidden;pointer-events:none}
+.constellation-map{border:0!important;background:radial-gradient(ellipse at 22% 18%,rgba(44,35,79,.72),rgba(20,17,47,.55) 68%,transparent 100%)!important;box-shadow:none!important;backdrop-filter:none!important}
+.map-accessible-list{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.map-accessible-list:focus-within{position:relative!important;width:100%!important;height:148px!important;margin:5px 0 2px!important;overflow:visible!important;clip:auto!important}
+@media(min-width:621px){
+ .code-panel.panel{height:226px;border:0!important;border-left:1px solid rgba(255,242,216,.28)!important;border-radius:0!important;background:linear-gradient(90deg,rgba(13,11,37,.7),rgba(13,11,37,.3) 72%,transparent)!important;box-shadow:none!important;backdrop-filter:none!important}
+ .code-panel .panel-toolbar{border:0;background:transparent}
+ .code-panel .code-body{background:linear-gradient(90deg,rgba(9,8,29,.44),transparent)}
+ .goal-card.panel{top:clamp(470px,49vh,530px);bottom:auto;width:min(510px,42vw)}
+}
+@media(max-width:620px){.goal-card.panel{top:auto}}
+body.world-map-open .map-toggle::after{animation:none;opacity:.75;scale:1.1}
+body.isle-hover .cursor-aura{width:54px;height:54px;border-color:rgba(255,226,159,.9);box-shadow:0 0 30px rgba(255,220,143,.46),inset 0 0 18px rgba(255,232,195,.14)}
+body.isle-hover .cursor-hex{scale:1.18;color:#fff8df}
+body .sidebar{display:none!important}
+
+/* One learning column; source code lives in a warm, solid side drawer. */
+.main-content{min-height:100vh;padding:0!important}
+.page-heading{position:fixed;z-index:6;top:82px;left:clamp(22px,4vw,62px);width:min(720px,58vw);margin:0!important;display:block}
+.page-heading h1{font-weight:700!important;font-size:clamp(44px,5.4vw,76px)!important;letter-spacing:-.02em;line-height:.96}
+.page-heading p{max-width:52ch;font-size:clamp(15px,1.25vw,18px)!important;font-weight:600!important;line-height:1.5;color:rgba(255,250,240,.96)!important}
+.page-heading .eyebrow{font-size:11px;font-weight:700;color:#fff0d0}
+.page-heading .subset-badge{position:fixed;top:91px;right:clamp(28px,4vw,62px);font-weight:700}
+.learning-column{position:fixed;z-index:5;left:clamp(20px,4vw,62px);top:clamp(250px,34vh,340px);bottom:92px;width:min(590px,46vw);display:flex;flex-direction:column;gap:12px;min-height:0}
+.visual-panel.panel{position:relative;inset:auto;flex:1 1 58%;min-height:190px;overflow:visible;display:flex;flex-direction:column}
+.visual-panel.panel{order:0}
+.visual-panel .panel-toolbar{position:relative;top:auto;right:auto;flex:none;align-self:flex-start;margin:0 0 8px;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.visual-panel .panel-title{font-size:11px;font-weight:800;letter-spacing:1.5px}
+.live-badge{font-size:9px;font-weight:700}
+.visual-stage{position:relative;inset:auto;flex:1;min-height:140px;height:auto;overflow:visible;background:none}
+.visual-stage .eval-visual,.visual-stage .generated-view{position:absolute;left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(100%,520px);max-width:520px;max-height:100%;padding:16px 20px;border:0;border-radius:0;background:radial-gradient(ellipse at center,rgba(13,12,40,.8),rgba(13,12,40,.48) 63%,transparent 100%);box-shadow:none;backdrop-filter:none}
+.visual-stage .generated-view{width:min(100%,550px)}
+.visual-caption{position:relative;inset:auto;flex:none;align-self:flex-start;height:auto;min-height:26px;padding:4px 2px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;font-size:11px;font-weight:600;color:#fffaf1}
+.goal-card.panel{position:relative;inset:auto;flex:0 1 38%;width:100%;min-height:130px;margin:0;padding:15px 18px;overflow:hidden;border:1px solid rgba(255,244,218,.32)!important;border-radius:2px!important;background:linear-gradient(100deg,rgba(12,11,35,.88),rgba(12,11,35,.56) 83%,transparent)!important;box-shadow:none!important;backdrop-filter:none!important}
+.goal-card.panel{order:1}
+.goal-card.panel::before{display:none}
+.goal-card .goal-label{font-size:10px;font-weight:800;letter-spacing:1.6px;color:#ffebc0}
+.evaluation-trace{max-height:clamp(100px,22vh,250px);gap:8px}
+.trace-line{grid-template-columns:34px minmax(0,1fr);gap:10px}
+.trace-step{font-size:11px;font-weight:700;color:#ffdda0}
+.trace-line code{font-size:clamp(12px,1vw,14px);font-weight:600;line-height:1.65;color:#fffdf7}
+.trace-line.is-past code{color:rgba(255,250,240,.76)}
+.trace-content small{font-size:11px;font-weight:600;color:rgba(255,245,226,.8)}
+.goal-card .goal-state{top:14px;right:16px;font-size:10px;font-weight:700;color:#fff5df}
+.goal-icon{width:34px;height:34px;font-size:18px}
+.player-controls{position:fixed;z-index:8;left:clamp(20px,4vw,62px);right:auto;bottom:22px;margin:0}
+.control-hint{display:none}
+.control-buttons{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.previous-button,.reset-button,.next-button{height:42px;padding-inline:16px;font-size:13px;font-weight:700}
+.code-drawer-toggle{display:inline-flex!important;align-items:center;gap:8px;padding:8px 12px!important;border:1px solid rgba(255,239,205,.46)!important;background:rgba(15,13,41,.55)!important;color:#fff5e1!important;font-size:12px;font-weight:700}
+.code-drawer-toggle .toggle-icon{color:#f4d99c}
+.code-drawer{position:fixed;z-index:30;inset:0 0 0 auto;width:min(500px,43vw);padding:clamp(24px,4vh,42px) clamp(22px,3vw,38px);overflow:auto;background:#f1e7d3;color:#26243a;box-shadow:-24px 0 70px rgba(7,6,24,.28);transform:translateX(calc(100% + 30px));visibility:hidden;transition:transform .62s cubic-bezier(.22,.82,.2,1),visibility 0s linear .62s}
+.code-drawer-open .code-drawer{transform:translateX(0);visibility:visible;transition:transform .62s cubic-bezier(.22,.82,.2,1),visibility 0s}
+.code-drawer-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(51,44,64,.18)}
+.code-drawer-heading .eyebrow{font-size:10px;font-weight:800;letter-spacing:1.8px;color:#77708a}
+.code-drawer-heading h2{margin:5px 0 0;font:700 clamp(32px,3vw,42px)/1 'Cormorant Garamond',Georgia,serif;color:#28243b}
+.code-drawer-heading>button{width:40px;height:40px;border:1px solid rgba(40,36,59,.22);border-radius:50%;background:transparent;color:#312d43;font-size:28px;line-height:1}
+.code-drawer .code-panel.panel{position:relative;inset:auto;width:100%;height:min(42vh,390px);padding:0!important;border:1px solid rgba(46,40,61,.2)!important;border-radius:2px!important;background:#fffaf0!important;box-shadow:none!important;backdrop-filter:none!important}
+.code-drawer .code-panel.panel::before{display:none!important}
+.code-drawer .code-panel .panel-toolbar{height:44px;padding-inline:14px;border-bottom:1px solid rgba(46,40,61,.12)}
+.code-drawer .panel-title,.code-drawer .code-status{color:#302b42}
+.code-drawer .file-glyph,.code-drawer .status-check{color:#a47639}
+.code-drawer .file-pill{background:rgba(102,83,123,.1);color:#665b72}
+.code-drawer .code-body{height:calc(100% - 80px);padding:14px 0;background:transparent;color:#302b42}
+.code-drawer .code-line{min-height:25px;font-size:12px;color:#302b42}
+.code-drawer .line-content{color:#302b42}
+.code-drawer .line-number{color:#93899a}
+.code-drawer .kw{color:#765292}.code-drawer .type{color:#356b75}.code-drawer .fn{color:#8d642f}.code-drawer .operator{color:#a25061}.code-drawer .comment{color:#8a8290}
+.code-drawer .code-redex{background:#e9d4a3;color:#28243b;box-shadow:none}
+.code-drawer .code-status{height:36px;border-top-color:rgba(46,40,61,.13);font-size:11px}
+.code-drawer .code-status-right{color:#71697a}
+.code-drawer .editor-card{position:relative;inset:auto;width:100%;margin-top:23px;padding:0 0 13px;border:0!important;border-top:1px solid rgba(51,44,64,.2)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+.code-drawer .editor-card>.panel-toolbar{min-height:54px;padding:0 3px!important;border:0!important;background:transparent!important;color:#302b42}
+.code-drawer .editor-card .panel-title{font-weight:700;color:#302b42}
+.code-drawer .editor-hint{font-size:11px;font-weight:600;color:#6b6374}
+.code-drawer .editor-card[open]{padding:0 0 14px;background:transparent!important}
+.code-drawer .editor-card #sourceEditor{min-height:160px;border:1px solid rgba(49,43,65,.22);border-radius:2px;background:#fffaf0;color:#302b42;font-size:12px;line-height:1.8}
+.code-drawer .editor-footer{align-items:center;gap:12px;padding:12px 0;color:#5c5567;font-size:11px;font-weight:600}
+.code-drawer .run-button{height:42px;font-size:12px}
+.code-drawer-open .code-drawer-toggle{background:#f1e7d3!important;color:#28243b!important;border-color:#f1e7d3!important}
+.code-drawer-open .code-drawer-toggle .toggle-icon{color:#8d642f}
+.code-drawer-open.world-map-open .code-drawer{transform:translateX(calc(100% + 30px))}
+.code-drawer-open .page-heading,.code-drawer-open .learning-column{transition:transform .62s cubic-bezier(.22,.82,.2,1),opacity .45s ease}
+.code-drawer-open .page-heading,.code-drawer-open .learning-column{transform:translateX(-18px);opacity:.72}
+.page-heading,.learning-column{transition:transform .62s cubic-bezier(.22,.82,.2,1),opacity .45s ease}
+.code-drawer-open .code-drawer .editor-card{display:block!important}
+@media(max-width:900px){
+ .learning-column{width:min(560px,54vw);left:22px;top:clamp(255px,34vh,320px)}
+ .page-heading{left:22px;width:59vw}
+ .page-heading h1{font-size:clamp(40px,6vw,62px)!important}
+ .code-drawer{width:min(480px,49vw)}
+}
+@media(max-width:620px){
+ .topbar{padding-inline:10px;gap:8px}
+ .brand{font-size:12px}
+ .top-actions{gap:2px}
+ .top-actions .sound-toggle .toggle-label,.top-actions .motion-toggle .toggle-label,.top-actions .theme-toggle .toggle-label{display:none}
+ .code-drawer-toggle .toggle-label{display:inline!important;font-size:8px}
+ .code-drawer-toggle{gap:3px;padding:4px 6px!important}
+ .page-heading{top:72px;left:16px;width:calc(100vw - 32px)}
+ .page-heading h1{font-size:clamp(38px,11vw,54px)!important}
+ .page-heading p{max-width:34ch;font-size:13px!important}
+ .page-heading .subset-badge{top:122px;right:16px;font-size:7px}
+ .learning-column{left:14px;right:14px;top:clamp(240px,37vh,315px);bottom:105px;width:auto;gap:7px}
+ .visual-panel.panel{flex-basis:52%;min-height:130px}
+ .visual-stage{min-height:100px}
+ .visual-stage .eval-visual,.visual-stage .generated-view{width:100%;padding:8px 4px}
+ .goal-card.panel{flex-basis:42%;min-height:108px;padding:10px 9px}
+ .goal-card .goal-label{font-size:9px}
+ .trace-line{grid-template-columns:26px minmax(0,1fr);gap:6px}
+ .trace-step{font-size:11px}.trace-line code{font-size:12px;line-height:1.5}.trace-content small{font-size:10px}
+ .goal-card .goal-state{top:10px;right:8px;font-size:8px}
+ .goal-icon{width:26px;height:26px;font-size:15px}
+ .player-controls{left:14px;bottom:17px;right:14px}
+ .control-buttons{width:100%;justify-content:flex-start}
+ .previous-button,.reset-button,.next-button{height:38px;padding-inline:12px;font-size:11px}
+ .code-drawer{inset:0 0 0 auto;width:min(100vw,470px);padding:22px 18px max(24px,env(safe-area-inset-bottom));overflow:auto}
+ .code-drawer .code-panel.panel{height:36vh;min-height:220px}
+ .code-drawer .code-line{font-size:11px}
+ .code-drawer-open .page-heading,.code-drawer-open .learning-column{opacity:.25;transform:translateX(-8px)}
+ body.adventure-running .learning-column{top:80px;bottom:78px}
+ body.adventure-running .page-heading{display:block!important;top:18px}
+ body.adventure-running .code-drawer .editor-card{display:block!important}
+}
+
+/* Shared column edges: a smaller inset, with the trace ending at the title's measure. */
+:root{--lesson-left:clamp(16px,2vw,30px);--lesson-width:min(720px,46vw)}
+.page-heading{left:var(--lesson-left)!important;width:var(--lesson-width)!important;max-width:none!important}
+.learning-column{left:var(--lesson-left)!important;width:var(--lesson-width)!important;right:auto!important}
+.goal-card.panel{width:100%}
+.player-controls{left:var(--lesson-left)!important;width:var(--lesson-width);right:auto!important}
+@media(max-width:900px){
+ .page-heading{left:22px!important;width:52vw!important}
+ .learning-column{left:22px!important;width:52vw!important;right:auto!important}
+ .player-controls{left:22px!important;width:52vw}
+}
+@media(max-width:620px){
+ .page-heading{left:14px!important;width:min(74vw,calc(100vw - 28px))!important}
+ .page-heading h1{font-size:clamp(35px,9vw,48px)!important;white-space:nowrap}
+ .learning-column{left:14px!important;right:auto!important;width:min(74vw,calc(100vw - 28px))!important}
+ .player-controls{left:14px!important;width:min(74vw,calc(100vw - 28px))}
+}
+
+/* Notebook drawer: ruled paper, a bound edge, and entries instead of floating cards. */
+.code-drawer{background-color:#f1e7d3!important;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(85,104,126,.105) 32px),linear-gradient(90deg,rgba(180,111,93,.11),transparent 42px),linear-gradient(145deg,#f5eddc,#eee2c9)!important;padding-left:clamp(34px,4vw,52px)!important}
+.code-drawer::before{content:"";position:absolute;z-index:0;inset:0 auto 0 0;width:18px;background:radial-gradient(circle at 9px 34px,rgba(98,81,71,.28) 0 2px,transparent 2.5px) 0 0/18px 46px repeat-y,linear-gradient(90deg,rgba(89,70,61,.15),transparent);pointer-events:none}
+.code-drawer-heading,.code-drawer .code-panel,.code-drawer .editor-card{position:relative;z-index:1}
+.code-drawer-heading{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(80,73,70,.23)}
+.code-drawer-heading .eyebrow{color:#81796e;letter-spacing:2px}
+.code-drawer-heading h2{font-family:'Cormorant Garamond',Georgia,serif!important;font-size:clamp(34px,3vw,44px)!important;font-weight:700!important;letter-spacing:-.03em!important;font-style:italic;color:#302b39}
+.code-drawer .code-panel.panel{height:min(44vh,410px);border:0!important;border-bottom:1px solid rgba(80,73,70,.24)!important;border-radius:0!important;background:transparent!important}
+.code-drawer .code-panel .panel-toolbar{height:43px;padding-inline:3px;border-bottom:1px solid rgba(80,73,70,.18)}
+.code-drawer .panel-title{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px!important;font-weight:700!important;color:#383342}
+.code-drawer .file-glyph{font-size:15px;color:#9a7043}
+.code-drawer .file-pill{background:transparent;color:#756a7a;font-size:9px;letter-spacing:1px}
+.code-drawer .code-body{height:calc(100% - 79px);padding:11px 4px 10px 0;background:repeating-linear-gradient(to bottom,transparent 0 29px,rgba(79,112,148,.12) 30px);}
+.code-drawer .code-line{min-height:30px;font-family:'DM Mono',monospace;font-size:14px;line-height:1.9;color:#302b42}
+.code-drawer .line-number{color:#8c9298}
+.code-drawer .code-status{height:36px;border-top:0;color:#5d574f}
+.code-drawer .editor-card{margin-top:20px;border-top:1px solid rgba(80,73,70,.22)!important}
+.code-drawer .editor-card>.panel-toolbar{font-family:'Cormorant Garamond',Georgia,serif;font-size:16px}
+.code-drawer .editor-card .panel-title{font-size:17px!important}
+.code-drawer .editor-card #sourceEditor{border:0;border-left:1px solid rgba(178,112,96,.4);border-radius:0;background:repeating-linear-gradient(to bottom,#fffaf0 0 29px,rgba(79,112,148,.13) 30px);font-size:14px;line-height:2.05}
+.code-drawer .editor-footer{font-size:13px}
+@media(max-width:620px){.code-drawer{padding-left:36px!important}.code-drawer .code-panel.panel{height:36vh;min-height:220px}}
+
+/* The wayfinding constellation only enters the scene when the camera tilts into the sky. */
+.map-toggle{display:none!important}
+.sky-navigation{position:fixed;z-index:18;top:clamp(78px,13vh,122px);left:50%;width:min(780px,78vw);height:clamp(188px,27vh,250px);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,18px) scale(.985);transition:opacity .55s ease,transform .7s cubic-bezier(.2,.8,.2,1),visibility 0s linear .7s}
+.sky-facing .sky-navigation{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0) scale(1);transition:opacity .55s ease,transform .7s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.sky-navigation-heading{position:absolute;top:0;left:50%;display:flex;gap:14px;align-items:center;transform:translateX(-50%);color:rgba(245,237,220,.76);font:700 9px var(--mono);letter-spacing:1.6px;white-space:nowrap;text-shadow:0 2px 12px #080718}
+.sky-navigation-heading span+span{color:rgba(245,220,168,.85);font-size:8px}
+.sky-navigation-lines{position:absolute;inset:21px 0 0;width:100%;height:calc(100% - 21px);overflow:visible;pointer-events:none}
+.sky-navigation-lines path{fill:none;stroke:rgba(220,222,241,.42);stroke-width:1;stroke-dasharray:2 7;filter:drop-shadow(0 0 5px rgba(206,211,245,.8))}
+.sky-node{position:absolute;display:grid;justify-items:center;gap:3px;min-width:72px;padding:3px 6px;border:0;background:transparent;color:#fff8e7;font-size:13px;font-weight:700;letter-spacing:.2px;text-shadow:0 2px 12px #070616,0 0 16px rgba(241,225,188,.5);transition:transform .25s,color .25s,filter .25s}
+.sky-node i{font-style:normal;font-size:25px;line-height:1;color:#fbe8b9;text-shadow:0 0 9px #fff2d2,0 0 26px rgba(255,220,150,.86);transition:transform .25s,color .25s}
+.sky-node:hover,.sky-node:focus-visible{color:#fff0c5;transform:translateY(-4px) scale(1.06);outline:none}
+.sky-node:hover i,.sky-node:focus-visible i{color:#fff9e4;transform:rotate(30deg);}
+.sky-node-home{left:5%;top:54%}.sky-node-adventure{right:4%;top:54%}
+.sky-node-verdant{left:19%;top:69%}.sky-node-ember{left:37%;top:30%}.sky-node-frost{left:59%;top:69%}.sky-node-cloud{left:79%;top:30%}
+.sky-facing .world-sky{filter:saturate(.78) hue-rotate(-8deg) brightness(.66)!important}
+.world-sky::after{content:"";position:absolute;inset:0;z-index:1;opacity:0;pointer-events:none;background:radial-gradient(1px 1px at 12% 23%,rgba(255,246,218,.85) 0 1px,transparent 1.5px),radial-gradient(1px 1px at 73% 36%,rgba(255,246,218,.65) 0 1px,transparent 1.5px),radial-gradient(1px 1px at 42% 18%,rgba(255,246,218,.72) 0 1px,transparent 1.5px),radial-gradient(1px 1px at 88% 69%,rgba(255,246,218,.7) 0 1px,transparent 1.5px),linear-gradient(180deg,rgba(8,10,29,.42),rgba(13,12,39,.1));transition:opacity .8s ease}
+.sky-facing .world-sky::after{opacity:.85}
+.sky-look-hint{color:rgba(255,239,207,.67);font:700 8px var(--mono);letter-spacing:1.2px;text-shadow:0 2px 12px #080718;transition:opacity .3s ease}
+.sky-facing .sky-look-hint{opacity:0}
+@media(max-width:620px){
+ .sky-look-hint{display:block;position:fixed;z-index:12;top:53px;left:14px;font-size:7px;letter-spacing:.8px}
+ .sky-navigation{top:76px;width:96vw;height:220px}
+ .sky-navigation-heading{font-size:7px;gap:7px;letter-spacing:1px}
+ .sky-navigation-heading span+span{font-size:6px}
+ .sky-node{min-width:57px;font-size:10px}
+ .sky-node i{font-size:21px}
+ .sky-node-home{left:1%}.sky-node-adventure{right:1%}
+ .sky-node-verdant{left:16%}.sky-node-ember{left:35%}.sky-node-frost{left:57%}.sky-node-cloud{left:77%}
+}
+
+/* Chunky display type and a roomier, step-led reading rail. */
+.page-heading h1{font-family:'Oxanium',system-ui,sans-serif!important;font-weight:800!important;letter-spacing:.005em!important;line-height:1.04!important}
+.code-drawer-heading h2{font-family:'Oxanium',system-ui,sans-serif;font-weight:800;letter-spacing:.015em}
+.learning-column{left:clamp(22px,4vw,62px);top:clamp(290px,43vh,380px);}
+.visual-panel.panel{min-height:170px}
+.goal-card.panel{flex-basis:46%;min-height:172px}
+.goal-card .goal-copy{display:flex;flex-direction:column;align-self:stretch;height:100%;min-height:0}
+.evaluation-trace{flex:1;min-height:0;max-height:none;gap:9px;padding:4px 6px 7px 0}
+.trace-line{grid-template-columns:38px minmax(0,1fr);gap:12px;padding:3px 0}
+.trace-step{font-size:13px;font-weight:700;color:rgba(255,226,177,.82)}
+.trace-line code{font-size:13px;font-weight:600;line-height:1.65}
+.trace-line.is-past{opacity:.76}
+.trace-line.is-past code{font-size:12px;line-height:1.5;color:rgba(255,250,240,.82)}
+.trace-line.is-past .trace-step{font-size:11px;color:rgba(255,226,177,.7)}
+.trace-line.is-current{padding:8px 10px;border-left:2px solid #f4d99c;background:linear-gradient(90deg,rgba(244,217,156,.14),rgba(244,217,156,.025) 82%,transparent)}
+.trace-line.is-current code{font-size:clamp(16px,1.25vw,19px);font-weight:700;line-height:1.55;color:#fffdf7}
+.trace-line.is-current .trace-step{font-size:15px;font-weight:800;color:#ffe5ab}
+.trace-line.is-current .trace-content small{font-size:12px;font-weight:600;color:#fff0d1}
+.trace-content small{font-size:12px;line-height:1.5}
+.code-drawer .code-line{min-height:30px;font-size:14px;line-height:1.8;white-space:normal;align-items:flex-start}
+.code-drawer .line-content{overflow-wrap:anywhere}
+.code-drawer .line-number{font-size:11px;line-height:2.1}
+.code-drawer .panel-title{font-size:14px;font-weight:700}
+.code-drawer .file-pill{font-size:10px}
+.code-drawer .code-status{font-size:12px;font-weight:600}
+.code-drawer .editor-hint,.code-drawer .editor-footer{font-size:13px;font-weight:600}
+.code-drawer .editor-card #sourceEditor{font-size:14px;line-height:1.8}
+@media(max-width:900px){
+ .learning-column{top:clamp(280px,42vh,355px)}
+ .goal-card.panel{flex-basis:46%;min-height:160px}
+}
+.graph-visual{gap:13px!important;max-width:100%!important;width:100%;overflow:hidden}
+.graph-caption,.graph-source{font:11px var(--mono);color:rgba(255,245,225,.78);text-align:center}
+.graph-row{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;overflow-x:auto;padding:10px 4px}
+.graph-node{display:grid;gap:4px;justify-items:center;min-width:62px;padding:10px 8px;border:1px solid rgba(255,231,178,.3);border-radius:14px;background:rgba(31,27,66,.84);color:#fff7df;box-shadow:0 8px 22px rgba(12,8,32,.22);animation:graphNodeIn .35s ease-out both}
+.graph-node small{font:8px var(--mono);letter-spacing:.6px;color:#ffe1a7;text-transform:uppercase}
+.graph-node strong{font:700 20px var(--mono)}
+.graph-node.graph-root{border-color:rgba(194,227,201,.55)}
+.graph-node.active{border-color:#ffe0a1;background:rgba(112,78,112,.9);box-shadow:0 0 22px rgba(255,214,141,.4);transform:translateY(-4px)}
+.graph-node.complete{border-color:rgba(198,232,204,.58)}
+.graph-edge{color:#ffe4ad;font-size:17px;text-shadow:0 0 10px rgba(255,220,160,.5);animation:graphEdgeIn .3s ease-out both}
+@keyframes graphNodeIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes graphEdgeIn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:scaleX(1)}}
+@media(max-width:620px){
+ .page-heading h1{font-size:clamp(35px,10vw,52px)!important;line-height:1.06!important}
+ .learning-column{left:16px;top:clamp(255px,40vh,310px);bottom:105px}
+ .goal-card.panel{flex-basis:48%;min-height:154px;padding:10px 10px}
+ .evaluation-trace{gap:5px;padding-right:2px}
+ .trace-line{grid-template-columns:25px minmax(0,1fr);gap:7px;padding:1px 0}
+ .trace-step{font-size:10px}
+ .trace-line.is-past code{font-size:10px;line-height:1.45}
+ .trace-line.is-past .trace-step{font-size:9px}
+ .trace-line.is-current{padding:6px 6px}
+ .trace-line.is-current code{font-size:14px;line-height:1.45}
+ .trace-line.is-current .trace-step{font-size:12px}
+ .trace-content small,.trace-line.is-current .trace-content small{font-size:10px}
+ .code-drawer .code-line{font-size:13px;line-height:1.75}
+ .code-drawer .editor-card #sourceEditor{font-size:13px}
+}
+
+@media(max-width:620px){.page-heading h1{font-size:clamp(35px,9vw,48px)!important;white-space:nowrap}}
+
+/* Keep every left-side surface on the title's exact text measure. */
+.page-heading,.learning-column,.player-controls{left:var(--lesson-left)!important;width:var(--lesson-width)!important;right:auto!important}
+.page-heading{max-width:none!important}
+.page-heading h1{white-space:nowrap}
+.goal-card.panel{width:100%!important}
+
+/* The world viewer reads from the same left edge as its heading and trace. */
+.visual-stage{justify-items:start!important}
+.visual-stage .eval-visual,.visual-stage .generated-view{left:0!important;right:auto!important;transform:translateY(-50%)!important;width:100%!important;max-width:none!important;margin:0!important;text-align:left!important;justify-items:start!important;background:radial-gradient(ellipse at left center,rgba(13,12,40,.72),rgba(13,12,40,.32) 62%,transparent 100%)!important}
+.visual-stage .eval-operation{justify-self:start!important;text-align:left}
+.visual-stage .eval-list-row{justify-content:flex-start!important}
+.visual-stage .generated-flow{justify-content:flex-start}
+.visual-stage .custom-value-view{gap:13px;padding:8px 10px 8px 0!important;overflow:auto}
+.visual-stage .custom-value-view{overflow:visible!important}
+.visual-stage .custom-value-view::before{display:none!important}
+.custom-value-flow{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);align-items:start;gap:12px;width:100%;padding:12px 0;border-top:1px solid rgba(255,240,207,.23);border-bottom:1px solid rgba(255,240,207,.23)}
+.custom-value-side{display:grid;align-content:start;gap:7px;min-width:0}
+.custom-value-side small{color:#ffe9bd;font:800 10px var(--mono);letter-spacing:1.2px;text-shadow:0 2px 9px #09061f}
+.custom-value-side code{color:#fffaf0;font:600 clamp(12px,1.1vw,16px)/1.6 var(--mono);overflow-wrap:anywhere;white-space:pre-wrap;text-shadow:0 2px 10px #08061f}
+.custom-value-result code{color:#ffe3a6}
+.custom-value-arrow{align-self:center;color:#ffe5a8;font-size:20px;text-shadow:0 0 15px rgba(255,225,166,.5)}
+.custom-value-caption{margin:0;color:rgba(255,246,225,.8);font-size:12px;font-weight:600;line-height:1.5;text-shadow:0 2px 9px #09061f}
+body.adventure-running .visual-stage .eval-visual{display:grid!important}
+
+/* Adventure gets a real reading column instead of inheriting the short title's
+   measured width; viewer, reduction trace, and controls occupy separate bands. */
+body.adventure-running .page-heading{display:block!important;top:20px!important;width:var(--lesson-width)!important;}
+body.adventure-running .page-heading h1{font-size:clamp(38px,5.2vw,68px)!important;white-space:nowrap;}
+body.adventure-running .page-heading p{max-width:46ch;font-size:clamp(13px,1.15vw,16px)!important;}
+body.adventure-running .learning-column{left:var(--lesson-left)!important;right:auto!important;top:clamp(190px,31vh,290px)!important;bottom:154px!important;width:var(--lesson-width)!important;gap:8px!important;}
+body.adventure-running .visual-panel{position:relative;flex:1;min-height:115px;}
+body.adventure-running .visual-stage{min-height:0;height:100%;}
+body.adventure-running .visual-stage .eval-visual,body.adventure-running .visual-stage .generated-view{top:50%!important;left:0!important;right:auto!important;bottom:auto!important;transform:translateY(-50%)!important;width:100%!important;max-width:none!important;max-height:100%;}
+body.adventure-running .goal-card.panel{position:fixed;left:var(--lesson-left)!important;right:auto!important;top:auto!important;bottom:93px!important;width:var(--lesson-width)!important;max-height:clamp(58px,14vh,112px);overflow:hidden;}
+body.adventure-running .evaluation-trace{max-height:clamp(42px,10vh,78px);}
+body.adventure-running .player-controls{left:var(--lesson-left)!important;right:auto!important;bottom:15px!important;width:var(--lesson-width)!important;}
+
+/* A duskier parchment gives the code diary clearer separation from the sky. */
+.code-drawer{background-color:#d9c9a8!important;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(52,68,91,.2) 32px),linear-gradient(90deg,rgba(137,72,57,.18),transparent 42px),linear-gradient(145deg,#e0d1b2,#cfbd98)!important;color:#211e2b!important;}
+.code-drawer-heading h2,.code-drawer .panel-title,.code-drawer .code-line,.code-drawer .line-content,.code-drawer .editor-card .panel-title{color:#211e2b!important;}
+.code-drawer-heading .eyebrow,.code-drawer .editor-hint{color:#514958!important;}
+.code-drawer .code-body{background:repeating-linear-gradient(to bottom,transparent 0 29px,rgba(46,77,112,.2) 30px)!important;}
+.code-drawer .line-number{color:#5d6370!important;}
+.code-drawer .code-drawer-heading{border-color:rgba(39,34,46,.34)!important;}
+.code-drawer .code-panel .panel-toolbar,.code-drawer .editor-card{border-color:rgba(39,34,46,.32)!important;}
+.code-drawer .editor-card #sourceEditor{background:repeating-linear-gradient(to bottom,#f2e7cf 0 29px,rgba(46,77,112,.2) 30px)!important;color:#211e2b!important;}
+@media(max-width:620px){
+ body.adventure-running .page-heading{top:14px!important;}
+ body.adventure-running .page-heading h1{font-size:clamp(31px,8vw,44px)!important;}
+ body.adventure-running .page-heading p{max-width:34ch;font-size:12px!important;}
+ body.adventure-running .learning-column{top:clamp(164px,27vh,218px)!important;bottom:160px!important;gap:4px!important;}
+ body.adventure-running .visual-panel{min-height:92px;}
+ body.adventure-running .goal-card.panel{left:var(--lesson-left)!important;right:auto!important;bottom:82px!important;width:var(--lesson-width)!important;max-height:76px;padding:3px 0!important;}
+ body.adventure-running .evaluation-trace{max-height:52px;}
+ body.adventure-running .player-controls{left:var(--lesson-left)!important;right:auto!important;bottom:8px!important;width:var(--lesson-width)!important;}
+}
+@media(max-width:620px){
+ .custom-value-flow{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:7px;padding:9px 0}
+ .custom-value-side small{font-size:8px;letter-spacing:.8px}
+ .custom-value-side code{font-size:11px}
+ .custom-value-caption{font-size:10px}
+}
