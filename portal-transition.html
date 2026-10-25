@@ -198,6 +198,7 @@ function tunnel(now,fp,vx,vy){
 }
 
 function gate(cx,cy,r,fade,t,u){
+  r=Math.max(0,Number.isFinite(r)?r:0);
   c.globalCompositeOperation='lighter';c.lineWidth=1.5;
   for(let i=0;i<36;i++){
     const a=i/36*6.283+t*2.4,L=24+80*Math.abs(Math.sin(i*1.7+t*7));
@@ -372,7 +373,8 @@ function sync(){
 
 function frame(now){
   c.globalCompositeOperation='source-over';c.globalAlpha=1;c.clearRect(0,0,W,H);
-  ambient(now);if(tr)step(now);
+  ambient(now);
+  try{if(tr)step(now)}catch(error){console.error('Portal flight recovered from an animation error.',error);if(tr)finish()}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

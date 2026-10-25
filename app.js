@@ -1059,14 +1059,14 @@ skyNavigation.querySelectorAll("[data-sky-island]").forEach((node) => {
 let pointerDrag = null;
 const appShell = $("appShell");
 const dragBlockSelector = "button,a,input,textarea,select,summary,[contenteditable='true']";
-window.addEventListener("pointerdown", (event) => {
+document.addEventListener("pointerdown", (event) => {
   if (!event.isPrimary || event.button !== 0 || event.target.closest?.(dragBlockSelector)) return;
   pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, pickable: !event.target.closest?.(".constellation-map") };
   document.body.classList.add("is-looking");
   try { appShell?.setPointerCapture(event.pointerId); } catch { /* The pointer may have been released before capture. */ }
   event.preventDefault();
-}, { passive: false });
-window.addEventListener("pointermove", (event) => {
+}, { capture: true, passive: false });
+document.addEventListener("pointermove", (event) => {
   if (pointerDrag?.id === event.pointerId) {
     const dx = event.clientX - pointerDrag.x, dy = event.clientY - pointerDrag.y;
     worldExperience?.rotateView(dx, dy);
@@ -1074,7 +1074,7 @@ window.addEventListener("pointermove", (event) => {
   } else {
     document.body.classList.toggle("isle-hover", worldExperience?.hoverIsland(event.clientX, event.clientY) ?? false);
   }
-}, { passive: true });
+}, { capture: true, passive: true });
 const stopLooking = (event) => {
   if (pointerDrag?.id !== event.pointerId) return;
   const drag = pointerDrag;
@@ -1083,8 +1083,8 @@ const stopLooking = (event) => {
   document.body.classList.remove("is-looking");
   if (clicked && drag.pickable) worldExperience?.pickIsland(event.clientX, event.clientY);
 };
-window.addEventListener("pointerup", stopLooking, { passive: true });
-window.addEventListener("pointercancel", stopLooking, { passive: true });
+document.addEventListener("pointerup", stopLooking, { capture: true, passive: true });
+document.addEventListener("pointercancel", stopLooking, { capture: true, passive: true });
 window.addEventListener("blur", () => {
   if (!pointerDrag) return;
   pointerDrag = null;

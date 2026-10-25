@@ -565,6 +565,9 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       const oldAdventureStep = state.adventureStep;
       const key = `${next.lessonId}:${next.adventureStep ?? 0}:${next.stepCount}:${next.activeIndex}:${next.done}:${next.mode}`;
       Object.assign(state, next);
+      // The app publishes its first lesson before the 3D manifest has loaded.
+      // Keep that state and let boot() frame it once the island data is ready.
+      if (!manifest) { previousKey = key; return; }
       if (key !== previousKey) {
         const switched = oldLesson !== state.lessonId || oldAdventureStep !== state.adventureStep;
         const now = performance.now();
