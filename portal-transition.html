@@ -154,7 +154,7 @@ function go(id,x,y,mode){
   busy=true;
   next.style.zIndex=3;next.style.clipPath=`circle(0px at ${x}px ${y}px)`;next.classList.add('on');
   const enter=mode==='enter';
-  tr={x,y,id,old,next,t0:performance.now(),mode,nc:next.querySelector('.copy'),dur:enter?3400:1900,g:enter?.2:.16,
+  tr={x,y,id,old,next,t0:performance.now(),mode,nc:next.querySelector('.copy'),dur:enter?8400:5200,g:enter?.2:.16,
       far:Math.hypot(Math.max(x,W-x),Math.max(y,H-y))+90};
 }
 

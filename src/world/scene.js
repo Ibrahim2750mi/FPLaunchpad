@@ -364,6 +364,22 @@ export function createWorldExperience({ canvas, labels, onGuideArrive, onIslandS
       if (!motion) { camera = next; cameraFrom = cameraTo = null; }
       return;
     }
+    if (adventureMode) {
+      // Adventure reductions travel by sliding the existing camera rig toward
+      // the next generated isle. Keep the player's current viewing angle while
+      // the island itself moves through the frame, as it does in the home arena.
+      const position = adventurePosition(state.adventureStep);
+      const focus = [position[0], position[1] + 1.2, position[2]];
+      const rigOffset = sub3(camera.eye, camera.target);
+      const next = { eye: v3(focus, rigOffset), target: focus };
+      cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
+      cameraTo = next;
+      flightAt = now;
+      flightDuration = (newIsland ? 3000 : 1450) * (0.94 + Math.random() * 0.12);
+      flightArc = newIsland ? 0.9 + Math.random() * 0.3 : 0.45;
+      if (!motion) { camera = next; cameraFrom = cameraTo = null; }
+      return;
+    }
     const pathCount = config.anchors.count ?? 4;
     const index = lessonPathIndex(activeId());
     const focus = focusFor(activeId(), index);
