@@ -12,19 +12,7 @@
     <link rel="stylesheet" href="src/world/pointer.css" />
   </head>
   <body>
-    <section class="arrival-screen" id="arrivalScreen" aria-labelledby="arrivalHeading" aria-modal="true" role="dialog">
-      <canvas class="arrival-effects" id="arrivalEffects" aria-hidden="true"></canvas>
-      <div class="arrival-copy" id="arrivalCopy">
-        <span class="arrival-mark" aria-hidden="true">⬡</span>
-        <p class="arrival-eyebrow" id="arrivalEyebrow">BEFORE THE FLIGHT · 01 / 03</p>
-        <h1 id="arrivalHeading">We built our own Lean interpreter.</h1>
-        <p class="arrival-description" id="arrivalDescription">It follows supported Lean expressions and applies one evaluation rule at a time. For code beyond this teaching subset, Lean 4 can run the program.</p>
-        <div class="arrival-actions">
-          <button type="button" class="arrival-skip" id="arrivalSkip">Skip the guide</button>
-          <button type="button" class="arrival-next" id="arrivalNext">Follow the light <span aria-hidden="true">→</span></button>
-        </div>
-      </div>
-    </section>
+    <iframe class="portal-entry" id="portalEntry" src="portal-transition.html" title="Lean Stepper introduction" aria-label="Lean Stepper introduction"></iframe>
     <div class="world-scene" id="worldScene" aria-hidden="true">
       <div class="world-camera" id="worldCamera">
       <div class="world-sky"></div>
@@ -64,7 +52,7 @@
         <span class="sky-look-hint" aria-hidden="true">DRAG UP TO WAYFIND</span>
         <div class="top-actions">
           <span class="keyboard-hint"><kbd>←</kbd><kbd>→</kbd> journey</span>
-          <button class="world-toggle" id="musicToggle" type="button" aria-pressed="false" aria-label="Turn ambient music on"><span class="toggle-icon">♫</span><span class="toggle-label">Music off</span></button>
+          <button class="world-toggle" id="musicToggle" type="button" aria-pressed="false" aria-label="Turn ambient music on" hidden><span class="toggle-icon">♫</span><span class="toggle-label">Music off</span></button>
           <button class="world-toggle sound-toggle" id="soundToggle" type="button" aria-pressed="true" aria-label="Turn step sounds off"><span class="toggle-icon">◖</span><span class="toggle-label">Sound on</span></button>
           <button class="world-toggle theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Switch to daylight"><span class="toggle-icon">☼</span><span class="toggle-label">Starlight</span></button>
           <button class="world-toggle motion-toggle" id="motionToggle" type="button" aria-pressed="true" aria-label="Turn ambient motion off"><span class="toggle-icon">✧</span><span class="toggle-label">Motion on</span></button>
@@ -158,7 +146,6 @@
     <div class="sky-cursor" id="skyCursor" aria-hidden="true"><span class="cursor-aura"></span><span class="cursor-orbit"><i></i><i></i></span><span class="cursor-hex">⬡</span></div>
     <div class="cursor-trail" id="cursorTrail" aria-hidden="true"></div>
     <audio id="ambientMusic" src="assets/audio/slow-stride-loop.ogg" loop preload="none"></audio>
-    <script type="module" src="src/world/arrival.js"></script>
     <script type="module" src="app.js"></script>
     <script type="module" src="src/world/pointer.js"></script>
   </body>

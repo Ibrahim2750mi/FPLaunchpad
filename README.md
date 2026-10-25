@@ -4,7 +4,7 @@ A browser teaching tool that steps through a Lean-style subset and runs other co
 
 The interface uses four procedural, vertex-coloured 3D island models and an animated guide light. The WebGL scene follows the current reduction through lesson-specific paths; values and outputs appear at their world anchors while the camera flies toward the active island. Adventure mode places those models along a deterministic, expanding route and keeps a forest of smaller, unmarked isles around the journey, so every reduction can travel to a fresh destination without replacing the world. The generated models are CC0 and can be rebuilt with `npm run build:assets`. The supplied illustrated sky and optional ambient track remain as the scene backdrop and music.
 
-On arrival, a short, skippable portal guide explains the teaching interpreter, the reduction trace, and how the viewer follows the current expression before opening the world.
+The experience opens through `portal-transition.html`, a cinematic portal guide that introduces the teaching interpreter, reduction trace, and live viewer before revealing the world. Its soundtrack control lives on the opening scene; the portal hands playback to the world audio when enabled.
 
 Programs in the stepper subset are reduced one step at a time. When code falls outside that subset, the app runs it with Lean 4 compiled to WebAssembly and tags the result as **ACTUAL LEAN 4**. For that fallback, the viewer generates a syntax-based overview and explains the constructs it recognized; that overview is not a Lean evaluation trace.
 

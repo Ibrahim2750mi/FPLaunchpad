@@ -693,14 +693,34 @@ $("musicToggle").addEventListener("click", async () => {
       await ambientMusic.play();
       fadeAmbientMusic(0.78);
       setToggleState($("musicToggle"), true, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
+      sendPortalMusicState(true);
     } catch {
       setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
       $("musicToggle").querySelector(".toggle-label").textContent = "Music unavailable";
+      sendPortalMusicState(false, true);
     }
   } else {
     fadeAmbientMusic(0, true);
     setToggleState($("musicToggle"), false, "Music on", "Music off", "Turn ambient music on", "Turn ambient music off");
+    sendPortalMusicState(false);
   }
+});
+
+const portalEntry = $("portalEntry");
+function sendPortalMusicState(enabled, unavailable = false) {
+  portalEntry?.contentWindow?.postMessage({ type: "leanstepper:music-state", enabled, unavailable }, location.origin);
+}
+window.toggleWorldMusicFromPortal = () => $("musicToggle").click();
+window.addEventListener("message", (event) => {
+  if (event.origin !== location.origin || event.source !== portalEntry?.contentWindow) return;
+  if (event.data?.type !== "leanstepper:enter-world") return;
+  portalEntry.inert = true;
+  portalEntry.setAttribute("aria-hidden", "true");
+  portalEntry.classList.add("is-leaving");
+  window.setTimeout(() => {
+    portalEntry.hidden = true;
+    $("appShell").inert = false;
+  }, 1050);
 });
 
 $("soundToggle").addEventListener("click", () => {

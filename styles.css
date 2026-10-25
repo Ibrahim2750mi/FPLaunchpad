@@ -216,25 +216,9 @@ body[data-theme="day"] .editor-card{background:rgba(42,61,101,.85)}
   .world-rays img{width:95%;opacity:.66}.world-particles{opacity:.64}
 }
 
-/* The portal transition introduces the interpreter before opening the world. */
-.arrival-screen{position:fixed;z-index:140;inset:0;display:grid;place-items:center;overflow:hidden;padding:24px;background:radial-gradient(ellipse at 50% 45%,rgba(53,45,104,.94),rgba(22,18,59,.98) 58%,#090b25 100%);color:#fff8e8;opacity:1;transition:opacity .9s ease,filter 1.2s ease,transform 1.2s cubic-bezier(.2,.8,.2,1)}
-.arrival-screen[hidden]{display:none}
-.arrival-screen.is-entering{opacity:0;filter:brightness(1.8) blur(5px);transform:scale(1.08);pointer-events:none}
-.arrival-effects{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.arrival-copy{position:relative;z-index:1;display:grid;justify-items:center;gap:18px;width:min(760px,92vw);text-align:center;transition:opacity .28s ease,transform .35s ease}
-.arrival-copy.is-changing{opacity:0;transform:translateY(12px) scale(.985)}
-.arrival-mark{display:grid;place-items:center;width:76px;height:76px;border:1px solid rgba(255,235,193,.5);border-radius:50%;color:#fff0c6;font-size:35px;text-shadow:0 0 26px rgba(255,222,153,.9);box-shadow:0 0 45px rgba(231,205,255,.16),inset 0 0 30px rgba(255,255,255,.08);animation:arrivalFloat 4s ease-in-out infinite}
-.arrival-eyebrow{margin:0;color:#ffe9ba;font:800 11px var(--mono);letter-spacing:1.8px;text-shadow:0 2px 12px #080718}
-.arrival-copy h1{max-width:14ch;margin:0;color:#fffaf0;font:800 clamp(38px,7vw,78px)/1.02 'Oxanium',system-ui,sans-serif;letter-spacing:.005em;text-shadow:0 3px 28px rgba(8,6,28,.7)}
-.arrival-description{max-width:52ch;margin:0;color:rgba(255,249,235,.94);font-size:clamp(16px,2vw,20px);font-weight:600;line-height:1.65;text-shadow:0 2px 14px #080718}
-.arrival-actions{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:9px}
-.arrival-next{display:flex;align-items:center;gap:20px;min-height:50px;padding:0 23px;border:1px solid #ffdf9e;border-radius:999px;background:linear-gradient(125deg,#fff1c9,#f0ce88);color:#261d43;font-weight:800;box-shadow:0 8px 35px rgba(255,215,152,.22);transition:transform .2s,box-shadow .2s}
-.arrival-next:hover{transform:translateY(-2px);box-shadow:0 12px 42px rgba(255,215,152,.38)}
-.arrival-next span{font-size:18px}
-.arrival-skip{padding:12px 5px;border:0;background:transparent;color:rgba(255,246,224,.72);font-size:13px;font-weight:700;text-decoration:underline;text-decoration-color:rgba(255,246,224,.34);text-underline-offset:4px}
-@keyframes arrivalFloat{50%{transform:translateY(-7px) rotate(5deg);box-shadow:0 0 58px rgba(231,205,255,.24),inset 0 0 34px rgba(255,255,255,.1)}}
-@media(max-width:620px){.arrival-copy{gap:14px}.arrival-copy h1{font-size:clamp(34px,10vw,53px)}.arrival-description{font-size:15px}.arrival-actions{gap:15px;flex-wrap:wrap}.arrival-mark{width:62px;height:62px;font-size:29px}}
-@media(prefers-reduced-motion:reduce){.arrival-screen,.arrival-copy,.arrival-mark,.arrival-next{transition:none!important;animation:none!important}}
+.portal-entry{position:fixed;z-index:140;inset:0;width:100vw;height:100vh;height:100dvh;border:0;background:#070a24;opacity:1;visibility:visible;transition:opacity 1s ease,visibility 0s linear 1s}
+.portal-entry.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+#musicToggle[hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){body[data-motion="off"] .world-bob,body[data-motion="off"] .world-clouds-back img,body[data-motion="off"] .world-clouds-front img{animation:none!important}body[data-motion="off"] .sample-item,body[data-motion="off"] .world-toggle{transition:none!important}}
 
 /* Let the islands become the interface instead of sitting behind dashboard cards. */
