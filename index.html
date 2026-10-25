@@ -53,8 +53,21 @@
           <button class="world-toggle sound-toggle" id="soundToggle" type="button" aria-pressed="true" aria-label="Turn step sounds off"><span class="toggle-icon">◖</span><span class="toggle-label">Sound on</span></button>
           <button class="world-toggle theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Switch to daylight"><span class="toggle-icon">☼</span><span class="toggle-label">Starlight</span></button>
           <button class="world-toggle motion-toggle" id="motionToggle" type="button" aria-pressed="true" aria-label="Turn ambient motion off"><span class="toggle-icon">✧</span><span class="toggle-label">Motion on</span></button>
+          <button class="world-toggle map-toggle" id="mapToggle" type="button" aria-label="Open constellation map" aria-expanded="false" aria-controls="constellationMap"><span class="toggle-icon">⌖</span><span class="toggle-label">Sky map</span></button>
         </div>
       </header>
+
+      <aside class="constellation-map" id="constellationMap" aria-label="Sky map" hidden>
+        <div class="map-heading"><span>ISLES IN THE STARS</span><button type="button" id="mapClose" aria-label="Close sky map">×</button></div>
+        <div class="star-chart" aria-label="Choose an island">
+          <svg viewBox="0 0 280 150" preserveAspectRatio="none" aria-hidden="true"><path d="M38 99 112 48 178 87 239 34 38 99"/><path d="m112 48 18 58 48-19m61-53-61 53"/></svg>
+          <button type="button" class="map-star star-verdant" data-island="map"><i></i><span>Verdant</span></button>
+          <button type="button" class="map-star star-ember" data-island="fold"><i></i><span>Ember</span></button>
+          <button type="button" class="map-star star-frost" data-island="let"><i></i><span>Frost</span></button>
+          <button type="button" class="map-star star-cloud" data-island="function"><i></i><span>Cloud</span></button>
+        </div>
+        <p>DRAG THE SKY TO LOOK AROUND</p>
+      </aside>
 
       <div class="workspace">
         <aside class="sidebar">

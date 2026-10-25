@@ -774,3 +774,50 @@ worldExperience?.setState({
   lessonId: example.id, stepCount: 0, activeIndex: -1, inputItems: example.preview,
   outputItems: [], accumulatorText: "", expressionText: example.source, done: false, error: false, mode: "subset",
 });
+
+const mapToggle = $("mapToggle");
+const constellationMap = $("constellationMap");
+function setMapOpen(open) {
+  const isOpen = Boolean(open);
+  constellationMap.hidden = !isOpen;
+  mapToggle.setAttribute("aria-expanded", String(isOpen));
+  mapToggle.setAttribute("aria-label", isOpen ? "Close constellation map" : "Open constellation map");
+  mapToggle.classList.toggle("is-active", isOpen);
+  worldExperience?.setOverview(isOpen);
+}
+mapToggle.addEventListener("click", () => setMapOpen(constellationMap.hidden));
+$("mapClose").addEventListener("click", () => setMapOpen(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !constellationMap.hidden) setMapOpen(false);
+});
+document.querySelectorAll(".map-star").forEach((star) => {
+  star.addEventListener("click", () => {
+    const id = star.dataset.island;
+    if (!examples.some((item) => item.id === id)) return;
+    setMapOpen(false);
+    selectExample(id);
+  });
+});
+
+let pointerDrag = null;
+const dragBlockSelector = "button,a,input,textarea,select,summary,[contenteditable='true'],.constellation-map";
+window.addEventListener("pointerdown", (event) => {
+  if (!event.isPrimary || event.button !== 0 || event.target.closest(dragBlockSelector)) return;
+  pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  document.body.classList.add("is-looking");
+  event.preventDefault();
+}, { passive: false });
+window.addEventListener("pointermove", (event) => {
+  if (pointerDrag?.id === event.pointerId) {
+    const dx = event.clientX - pointerDrag.x, dy = event.clientY - pointerDrag.y;
+    worldExperience?.rotateView(dx, dy);
+    pointerDrag.x = event.clientX; pointerDrag.y = event.clientY;
+  }
+}, { passive: true });
+const stopLooking = (event) => {
+  if (pointerDrag?.id !== event.pointerId) return;
+  pointerDrag = null;
+  document.body.classList.remove("is-looking");
+};
+window.addEventListener("pointerup", stopLooking, { passive: true });
+window.addEventListener("pointercancel", stopLooking, { passive: true });

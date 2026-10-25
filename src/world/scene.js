@@ -178,7 +178,7 @@ export function createWorldExperience({ canvas, labels }) {
   const ctx = labels.getContext("2d");
   const state = { lessonId: "map", stepCount: 0, activeIndex: -1, inputItems: [], outputItems: [], expressionText: "", done: false, error: false, mode: "subset" };
   const models = new Map();
-  let manifest, guide, day = false, motion = true, previousKey = "", transitionAt = 0, flightAt = 0, flightDuration = 1850;
+  let manifest, guide, day = false, motion = true, overview = false, orbitYaw = 0, orbitPitch = 0, previousKey = "", transitionAt = 0, flightAt = 0, flightDuration = 1850;
   let camera = { eye: [0, 12, 36], target: [0, 0, 0] }, cameraFrom = null, cameraTo = null;
   let guideFrom = null, guideTo = null;
   let raf = 0;
@@ -229,6 +229,15 @@ export function createWorldExperience({ canvas, labels }) {
   function targetCamera(now = performance.now(), newIsland = false) {
     const config = layout(), model = selectedModel();
     if (!config || !model) return;
+    if (overview) {
+      const next = { eye: [0, 112, 132], target: [0, 2, -58] };
+      cameraFrom = { eye: [...camera.eye], target: [...camera.target] };
+      cameraTo = next;
+      flightAt = now;
+      flightDuration = newIsland ? 1800 : 1100;
+      if (!motion) { camera = next; cameraFrom = cameraTo = null; }
+      return;
+    }
     const pathCount = config.anchors.count ?? 4;
     const index = lessonPathIndex(activeId());
     const focus = focusFor(activeId(), index);
@@ -285,6 +294,37 @@ export function createWorldExperience({ canvas, labels }) {
       if (cw <= 0 || cz / cw < -1 || cz / cw > 1) return null;
       return { x: (cx / cw * 0.5 + 0.5) * width, y: (1 - (cy / cw * 0.5 + 0.5)) * height };
     };
+    if (overview && manifest) {
+      const ids = ["map", "fold", "let", "function"];
+      const centers = ids.map((id) => {
+        const world = manifest.islands[id]?.world?.position;
+        return world ? { id, point: project([world[0], world[1] + 7, world[2]]) } : null;
+      }).filter((item) => item?.point);
+      ctx.save();
+      ctx.setLineDash([2, 9]); ctx.lineWidth = 1.25; ctx.strokeStyle = "rgba(224,215,255,.48)";
+      ctx.shadowBlur = 12; ctx.shadowColor = "rgba(207,193,255,.72)";
+      ctx.beginPath(); centers.forEach(({ point }, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+      if (centers.length > 2) ctx.lineTo(centers[0].point.x, centers[0].point.y);
+      ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur = 0;
+      for (const { id, point } of centers) {
+        const names = id === "map" ? ["landmark_gate", "landmark_pin", "landmark_tree"]
+          : id === "fold" ? ["landmark_gate", "landmark_pin", "landmark_forge"]
+            : id === "let" ? ["landmark_gate", "landmark_pin", "landmark_summit"]
+              : ["landmark_gate", "landmark_pin", "landmark_dome"];
+        const stars = names.map((name) => getAnchorWorld(id, name)).filter(Boolean).map(project).filter(Boolean);
+        ctx.strokeStyle = `${palette[id] || "#fff0b7"}88`; ctx.shadowBlur = 9; ctx.shadowColor = palette[id] || "#fff0b7";
+        ctx.beginPath(); stars.forEach((star, index) => index ? ctx.lineTo(star.x, star.y) : ctx.moveTo(star.x, star.y)); ctx.stroke();
+        for (const star of stars) {
+          ctx.fillStyle = "#fff8dd"; ctx.beginPath(); ctx.arc(star.x, star.y, 2.1, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.shadowBlur = 12; ctx.fillStyle = palette[id] || "#fff0b7";
+        ctx.beginPath(); ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0; ctx.font = "500 11px 'DM Mono', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillStyle = "rgba(255,249,232,.96)"; ctx.shadowBlur = 7; ctx.shadowColor = "rgba(9,7,26,.95)";
+        ctx.fillText(manifest.islands[id].place.toUpperCase(), point.x, point.y - 10);
+      }
+      ctx.restore();
+    }
     const drawTag = (value, x, y, tint, fontSize = 12) => {
       const text = String(value);
       ctx.font = `600 ${fontSize}px 'DM Mono', monospace`;
@@ -407,7 +447,13 @@ export function createWorldExperience({ canvas, labels }) {
       if (flight >= 1) { camera = cameraTo; cameraFrom = cameraTo = null; }
     }
     const p = perspective(layout()?.rig.fov ?? 52, width / height, 0.1, 650);
-    const pv = multiply(p, lookAt(camera.eye, camera.target));
+    const offset = sub3(camera.eye, camera.target);
+    const distance = Math.hypot(...offset) || 1;
+    const baseYaw = Math.atan2(offset[0], offset[2]);
+    const basePitch = Math.asin(clamp(offset[1] / distance, -1, 1));
+    const yaw = baseYaw + orbitYaw, pitch = clamp(basePitch + orbitPitch, -1.12, 1.12);
+    const orbitEye = v3(camera.target, [Math.sin(yaw) * Math.cos(pitch) * distance, Math.sin(pitch) * distance, Math.cos(yaw) * Math.cos(pitch) * distance]);
+    const pv = multiply(p, lookAt(orbitEye, camera.target));
     for (const [id, config] of Object.entries(manifest?.islands ?? {})) {
       const model = models.get(id);
       if (!model) continue;
@@ -465,6 +511,19 @@ export function createWorldExperience({ canvas, labels }) {
       }
     },
     setTheme(value) { day = Boolean(value); },
+    setOverview(value) {
+      const next = Boolean(value);
+      if (overview === next) return;
+      overview = next;
+      orbitYaw = 0; orbitPitch = 0;
+      if (models.size) targetCamera(performance.now(), true);
+    },
+    rotateView(dx, dy) {
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+      if (cameraTo) { camera = cameraTo; cameraFrom = cameraTo = null; }
+      orbitYaw = (orbitYaw - dx * 0.006) % (Math.PI * 2);
+      orbitPitch = clamp(orbitPitch + dy * 0.0055, -0.88, 0.88);
+    },
     setMotion(value) {
       motion = Boolean(value);
       if (!motion) {
